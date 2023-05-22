@@ -22,6 +22,7 @@ export class TreeMapViewComponent {
   public time_min = 0;
   public time_max = 0;
   public time_step = 0;
+  public value = 0;
 
   constructor(private http: HttpClient) {
     this.data = getData();
@@ -88,7 +89,10 @@ export class TreeMapViewComponent {
     // set the flag to true to stop displaying the loading spinner and show the table.
     
   }
-  public update_chart(time_index){
+  public update_chart(event){
+    let time = event.target.value;
+    let time_index = this.timesteps.indexOf(Number(time));
+    console.log(this.timesteps);
     var options = {...this.options};
     options.data = {name: this.data[time_index].time, children: this.data[time_index].children};
     this.options = options;
@@ -104,6 +108,7 @@ export class TreeMapViewComponent {
         this.time_min = this.timesteps[0];
         this.time_max = this.timesteps[this.timesteps.length-1];
         this.time_step = this.timesteps[1]-this.timesteps[0];
+        this.value = this.time_min;
         console.log('result is: ', JSON.stringify(this.data[0].children, null, 4));
         var options = {...this.options};
         options.data = {name: this.data[0].time, children: this.data[0].children};
