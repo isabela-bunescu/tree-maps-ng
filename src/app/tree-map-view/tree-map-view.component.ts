@@ -3,6 +3,8 @@ import { AgChartOptions, AgTreemapSeriesOptions } from 'ag-charts-community';
 import { AgChartsAngular } from 'ag-charts-angular';
 import { getData } from './data';
 import { HttpClient } from '@angular/common/http';
+import { DataFetcherService } from '../data-fetcher.service';
+import { hslToRgb } from '../extras';
 
 @Component({
   selector: 'app-tree-map-view',
@@ -12,7 +14,7 @@ import { HttpClient } from '@angular/common/http';
 
 export class TreeMapViewComponent {
 
-  base_url: string = 'http://localhost:5000/';
+  base_url: string = 'http://localhost:5000/'; 
   public options: AgChartOptions;
   @ViewChild(AgChartsAngular)
   public agChart!: AgChartsAngular;
@@ -23,8 +25,10 @@ export class TreeMapViewComponent {
   public time_max = 0;
   public time_step = 0;
   public value = 0;
+  public playing = false;
+  public timer;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private dfs: DataFetcherService) {
     this.data = getData();
    
     this.options = {
@@ -51,7 +55,10 @@ export class TreeMapViewComponent {
           labels: {
             value: {
               name: 'Population',
-              formatter: (params) => `${params.datum.value/1000000}`,
+              formatter: (params) => {
+                let val = Math.round(params.datum.value/1000000);
+
+                return '' + val + ' M';},
             },
           },
           groupStrokeWidth: 0,
@@ -61,7 +68,7 @@ export class TreeMapViewComponent {
               color: undefined,
             },
           },
-          formatter: ({ depth, parent, highlighted }) => {
+          /*formatter: ({ depth, parent, highlighted }) => {
             if (depth < 2) {
               return {};
             }
@@ -70,7 +77,21 @@ export class TreeMapViewComponent {
             if (highlighted)
               fill = 'rgb(0,0,0)';
             return { fill, stroke };
+          },*/
+          formatter: (params) => {
+            
+            
+            let h = (Math.round(360 * (params.datum.lim_max + params.datum.lim_min) / 2)+60)%360;
+
+            let s = 50;
+            let l = 50;
+            let rgb = hslToRgb(h,s,l);
+            
+            var fill = 'rgb( ' + rgb[0] + ', '+rgb[1]+', '+rgb[2]+')'
+            const stroke = params.highlighted ? 'black' : 'white';
+            return {fill, stroke};
           },
+
         } as AgTreemapSeriesOptions,
       ],
       title: {
@@ -84,19 +105,60 @@ export class TreeMapViewComponent {
   }
 
   ngOnInit() { 
-    this.get_data('generate_data'); 
+  this.dfs.get_data('generate_data');
+    this.dfs.callbackResponse.subscribe(response => {
+      
+      this.data = this.dfs.data;
+      //console.log(JSON.stringify(this.data));
+      this.timesteps = this.dfs.timesteps;
+      this.time_min = this.timesteps[0];
+          this.time_max = this.timesteps[this.timesteps.length-1];
+          this.time_step = this.timesteps[1]-this.timesteps[0];
+          this.value = this.time_min;
+          //console.log('result is: ', JSON.stringify(this.data[0].children, null, 4));
+          var options = {...this.options};
+          options.data = {name: this.data[0].time, children: this.data[0].children};
+          this.options = options;
+      this.isLoaded = true;
+            });
+    
+    
     //this.options.data = this.data[0].children;
     // set the flag to true to stop displaying the loading spinner and show the table.
     
   }
-  public update_chart(event){
-    let time = event.target.value;
+  
+  public update(time){
     let time_index = this.timesteps.indexOf(Number(time));
-    console.log(this.timesteps);
     var options = {...this.options};
     options.data = {name: this.data[time_index].time, children: this.data[time_index].children};
     this.options = options;
+  }
+  public update_chart(event){
+    this.value = event.target.value;
+    let time = event.target.value;
+    this.update(time);
   } 
+
+  public start(){
+   if(!this.playing) {
+    this.playing = true;
+    this.timer = setInterval(() => {
+      console.log(this.value);
+      this.value++;
+      this.update(this.value);
+    },0.5*1000)
+    }
+  }
+
+  public pause(){
+    this.playing = false;
+    clearInterval(this.timer);
+  }
+
+  ngOnDestroy(){
+    clearInterval(this.timer);
+  }
 
   public async get_data(path :string){
 
@@ -109,7 +171,7 @@ export class TreeMapViewComponent {
         this.time_max = this.timesteps[this.timesteps.length-1];
         this.time_step = this.timesteps[1]-this.timesteps[0];
         this.value = this.time_min;
-        console.log('result is: ', JSON.stringify(this.data[0].children, null, 4));
+        //console.log('result is: ', JSON.stringify(this.data[0].children, null, 4));
         var options = {...this.options};
         options.data = {name: this.data[0].time, children: this.data[0].children};
         this.options = options;
@@ -117,28 +179,7 @@ export class TreeMapViewComponent {
         this.isLoaded = true;
       });
   
-      /*
-    const response = await fetch(this.base_url + path, {
-      method: 'POST',
-      body: "",
-      headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'} });
-    
-    if (!response.ok) {
-      console.log("GET DATA ERROR");
-    }
-    
-    // If you care about a response:
-    if (response.body !== null) {
-      // body is ReadableStream<Uint8Array>
-      // parse as needed, e.g. reading directly, or
-      const result = (await response.json());
-      //console.log('result is: ', JSON.stringify(result, null, 4));
-      console.log(result[0].time);
-      //const asString = new TextDecoder("utf-8").decode(response.body);
-      // and further:
-      //const asJSON = JSON.parse(asString);  // implicitly 'any', make sure to verify type on runtime.
-      return result;
-    }*/
+
     
   }
 }

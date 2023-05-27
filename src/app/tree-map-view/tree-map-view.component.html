@@ -1,7 +1,17 @@
-<div *ngIf="isLoaded">
-  <div>
+<div>
+  <label for="treemap-layouts">Choose a layout:</label>
+
+  <select name="layout" id="layout">
+  <option value="squarified">Squarified</option>
+  <option value="saab">Saab</option>
+  <option value="mercedes">Mercedes</option>
+  <option value="audi">Audi</option>
+</select>
+</div>
+
+<div >
+  <div *ngIf="isLoaded" id="chart-ag">
     <ag-charts-angular
-      style="width: 100%"
       [options]="options"
     ></ag-charts-angular>
   </div>
@@ -11,9 +21,17 @@
           <span class="sr-only"></span>
       </div>
   </div>
-  <div class="d-flex flex-column justify-content-center">
+  <div *ngIf="isLoaded" class="d-flex flex-column justify-content-center">
     <label for="customRange3" class="form-label">Year</label>
     <input type="range" class="form-range" min={{time_min}} max={{time_max}} step={{time_step}} value={{value}} id="customRange3" oninput="this.nextElementSibling.value = this.value" (input)="update_chart($event);" >
     <output innerHTML={{value}}></output>
   </div>
+  <div class="d-flex flex-row justify-content-center">
+    <div class="p-2">
+        <button (click)="start()" type="button" class="btn btn-success">Play</button>
+    </div>
+    <div class="p-2">
+        <button (click)="pause()" type="button" class="btn btn-danger">Pause</button>
+    </div>
+</div>
 </div>
