@@ -4,7 +4,7 @@ import { AgChartsAngular } from 'ag-charts-angular';
 import { getData } from './data';
 import { HttpClient } from '@angular/common/http';
 import { DataFetcherService } from '../data-fetcher.service';
-import { hslToRgb } from '../extras';
+import { hslToRgb, population_smart_print, tree_diff_v1 } from '../extras';
 
 @Component({
   selector: 'app-tree-map-view',
@@ -14,23 +14,24 @@ import { hslToRgb } from '../extras';
 
 export class TreeMapViewComponent {
 
-  base_url: string = 'http://localhost:5000/'; 
+  base_url: string = 'http://localhost:5000/';
   public options: AgChartOptions;
   @ViewChild(AgChartsAngular)
   public agChart!: AgChartsAngular;
   public isLoaded = false; // is loaded flag
-  public data : any;
-  public timesteps = [0,0];
+  public data: any;
+  public timesteps = [0, 0];
   public time_min = 0;
   public time_max = 0;
   public time_step = 0;
-  public value = 0;
+  public index_time:number  = 0;
+  public index_time_prev: number = 0;
   public playing = false;
   public timer;
 
   constructor(private http: HttpClient, private dfs: DataFetcherService) {
     this.data = getData();
-   
+
     this.options = {
       data: this.data,
       series: [
@@ -56,9 +57,10 @@ export class TreeMapViewComponent {
             value: {
               name: 'Population',
               formatter: (params) => {
-                let val = Math.round(params.datum.value/1000000);
+                //let val = Math.round(params.datum.value/1000000);
 
-                return '' + val + ' M';},
+                return population_smart_print(params.datum.value);
+              },
             },
           },
           groupStrokeWidth: 0,
@@ -79,17 +81,17 @@ export class TreeMapViewComponent {
             return { fill, stroke };
           },*/
           formatter: (params) => {
-            
-            
-            let h = (Math.round(360 * (params.datum.lim_max + params.datum.lim_min) / 2)+60)%360;
+
+
+            let h = (Math.round(360 * (params.datum.lim_max + params.datum.lim_min) / 2) + 60) % 360;
 
             let s = 50;
             let l = 50;
-            let rgb = hslToRgb(h,s,l);
-            
-            var fill = 'rgb( ' + rgb[0] + ', '+rgb[1]+', '+rgb[2]+')'
+            let rgb = hslToRgb(h, s, l);
+
+            var fill = 'rgb( ' + rgb[0] + ', ' + rgb[1] + ', ' + rgb[2] + ')'
             const stroke = params.highlighted ? 'black' : 'white';
-            return {fill, stroke};
+            return { fill, stroke };
           },
 
         } as AgTreemapSeriesOptions,
@@ -100,86 +102,93 @@ export class TreeMapViewComponent {
       subtitle: {
         text: 'in millions',
       },
-      
+
     };
   }
 
-  ngOnInit() { 
-  this.dfs.get_data('generate_data');
+  ngOnInit() {
+    this.dfs.get_data('data/json/world-population-normal');
     this.dfs.callbackResponse.subscribe(response => {
-      
+
       this.data = this.dfs.data;
       //console.log(JSON.stringify(this.data));
       this.timesteps = this.dfs.timesteps;
       this.time_min = this.timesteps[0];
-          this.time_max = this.timesteps[this.timesteps.length-1];
-          this.time_step = this.timesteps[1]-this.timesteps[0];
-          this.value = this.time_min;
-          //console.log('result is: ', JSON.stringify(this.data[0].children, null, 4));
-          var options = {...this.options};
-          options.data = {name: this.data[0].time, children: this.data[0].children};
-          this.options = options;
+      this.time_max = this.timesteps[this.timesteps.length - 1];
+      this.time_step = this.timesteps[1] - this.timesteps[0];
+      this.index_time = +0;
+      //console.log('result is: ', JSON.stringify(this.data[0].children, null, 4));
+      var options = { ...this.options };
+      options.data = { name: this.data[0].time, children: this.data[0].children };
+      this.options = options;
       this.isLoaded = true;
-            });
-    
-    
+    });
+
+
     //this.options.data = this.data[0].children;
     // set the flag to true to stop displaying the loading spinner and show the table.
-    
-  }
-  
-  public update(time){
-    let time_index = this.timesteps.indexOf(Number(time));
-    var options = {...this.options};
-    options.data = {name: this.data[time_index].time, children: this.data[time_index].children};
-    this.options = options;
-  }
-  public update_chart(event){
-    this.value = event.target.value;
-    let time = event.target.value;
-    this.update(time);
-  } 
 
-  public start(){
-   if(!this.playing) {
-    this.playing = true;
-    this.timer = setInterval(() => {
-      console.log(this.value);
-      this.value++;
-      this.update(this.value);
-    },0.5*1000)
+  }
+
+  public update_index_time(event){
+   
+    this.index_time_prev = this.index_time;
+    this.index_time = +event.target.value;
+    tree_diff_v1(this.data[this.index_time_prev], this.data[this.index_time], [""])
+    this.update(this.index_time);
+  }
+  public update(index) {
+    var options = { ...this.options };
+    options.data = { name: this.data[index].time, children: this.data[index].children };
+    this.options = options;
+    //console.log(JSON.stringify(this.data[time_index], null, 4))
+  }
+  public update_chart(event) {
+    this.update(event.target.value);
+  }
+
+  public start() {
+    if (!this.playing) {
+      this.playing = true;
+      this.timer = setInterval(() => {
+        
+        if (this.index_time + 1 < this.timesteps.length) {
+          
+          this.index_time++;
+          this.update(this.index_time);
+        }
+      }, 0.5 * 1000)
     }
   }
 
-  public pause(){
+  public pause() {
     this.playing = false;
     clearInterval(this.timer);
   }
 
-  ngOnDestroy(){
+  ngOnDestroy() {
     clearInterval(this.timer);
   }
 
-  public async get_data(path :string){
+  public async get_data(path: string) {
 
-    this.http.get<any>(this.base_url + path).subscribe(dta => { 
-        this.data = dta;
-        this.timesteps = this.data.map(el => {
-          return el.time;
-        });
-        this.time_min = this.timesteps[0];
-        this.time_max = this.timesteps[this.timesteps.length-1];
-        this.time_step = this.timesteps[1]-this.timesteps[0];
-        this.value = this.time_min;
-        //console.log('result is: ', JSON.stringify(this.data[0].children, null, 4));
-        var options = {...this.options};
-        options.data = {name: this.data[0].time, children: this.data[0].children};
-        this.options = options;
-        // set the flag to true to stop displaying the loading spinner and show the table.
-        this.isLoaded = true;
+    this.http.get<any>(this.base_url + path).subscribe(dta => {
+      this.data = dta;
+      this.timesteps = this.data.map(el => {
+        return el.time;
       });
-  
+      this.time_min = this.timesteps[0];
+      this.time_max = this.timesteps[this.timesteps.length - 1];
+      this.time_step = this.timesteps[1] - this.timesteps[0];
+      //console.log('result is: ', JSON.stringify(this.data[0].children, null, 4));
+      var options = { ...this.options };
+      options.data = { name: this.data[0].time, children: this.data[0].children };
+      this.options = options;
+      // set the flag to true to stop displaying the loading spinner and show the table.
+      this.isLoaded = true;
+    });
 
-    
+
+
   }
 }

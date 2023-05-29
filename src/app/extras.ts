@@ -100,3 +100,71 @@ export function hslToRgb(h: number, s: number, l: number): [number, number, numb
 
   return [red, green, blue];
 }
+
+export function population_smart_print(n: number){
+
+  if(n < 900)
+  {
+    return n.toString();
+  }
+  if(n >=900 && n < 10000)
+  {
+    let N = (n/1000).toFixed(2);
+    return N.toString()+' k';
+  }
+  if(n >=10000 && n < 500000)
+  {
+    let N = (n/1000).toFixed(1);
+    return N.toString()+' k';
+  }
+  if(n>=500000 && n<10000000)
+  {
+    let N = (n/1000000).toFixed(2);
+    return N.toString()+' M';
+  }
+  if(n>=10000000 && n<900000000)
+  {
+    let N = (n/1000000).toFixed(1);
+    return N.toString()+' M';
+  }
+  if(n >= 900000000 )
+  {
+    let N = (n/1000000000).toFixed(2);
+    return N.toString()+' B';
+  }
+  return "0"
+  
+}
+
+export function tree_diff_v1(t1, t2, path: string[]){
+  if(!t1.hasOwnProperty("children") && !t2.hasOwnProperty("children"))
+    return;
+  if(t1.hash!=t2.hash)
+  {
+    if(t1.children[0].hasOwnProperty('children')){
+      for(let i = 0; i < t1.children.length; i++)
+      {
+        if(t1.children[i].hash != t2.children[i].hash)
+        {
+          let path_new = path;
+          path_new.push(t1.children[i].name);
+          
+          tree_diff_v1(t1.children[i], t2.children[i], path_new);
+        }
+      }
+    }
+    else{
+      let s1 =t1.children.map(c=>{return c.name;});
+      let s2 = t2.children.map(c=>{return c.name;});
+      
+      let diff12 = s1.filter(x => !s2.includes(x));
+      let diff21 = s2.filter(x => !s1.includes(x));
+      console.log(JSON.stringify(path), diff12, diff21);
+    }
+    
+  }
+  else 
+    return;
+  console.log()
+}
+  
