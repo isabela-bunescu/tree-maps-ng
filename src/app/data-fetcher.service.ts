@@ -3,18 +3,24 @@ import { Injectable } from '@angular/core';
 import { Subject, catchError, map, retry } from 'rxjs';
 import {Md5} from 'ts-md5';
 import { decorate_tree } from './extras';
+import { IndexEntry } from './index-entry';
 
 @Injectable({
   providedIn: 'root'
 })
+
 export class DataFetcherService {
   // backend address
   base_url: string = 'http://localhost:5000/'; 
   public data : any;
   public timesteps = [0,0];
   public callbackResponse = new Subject();
-  
-  constructor(private http: HttpClient) { }
+  public callbackResponseIndex = new Subject();
+  public entries: IndexEntry[] = [];
+
+  constructor(private http: HttpClient) { 
+    this.get_index();
+  }
 
     private decorate_tree(tree_root){
 
@@ -39,6 +45,16 @@ export class DataFetcherService {
           return {name: tree_root.name, total_value: tree_root.value, value: tree_root.value, hash: Md5.hashStr(tree_root.name)};
         }
     }
+
+  
+  public async get_index(){
+
+
+      this.http.get<any>(this.base_url + "data/index").subscribe(dta => { 
+         this.entries = dta;
+         this.callbackResponseIndex.next(true);
+       });
+  }
 
   public async get_data(path :string){
 

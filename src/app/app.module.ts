@@ -7,6 +7,7 @@ import { TreeMapViewComponent } from './tree-map-view/tree-map-view.component';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { TreeMapViewAmchartsComponent } from './tree-map-view-amcharts/tree-map-view-amcharts.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { TreeMapViewAmchartsComponent } from './tree-map-view-amcharts/tree-map-
     BrowserModule,
     AppRoutingModule,
     AgChartsAngularModule,
-    HttpClientModule
+    HttpClientModule,
+    FormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

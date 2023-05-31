@@ -8,8 +8,15 @@
   <option value="audi">Audi</option>
 </select>
 </div>
+<div>
+  <label for="treemap-datasets">Choose a dataset:</label>
+<select id="treemap-datasets" [(ngModel)]="selectedIndex" (ngModelChange)="update_to_new_chart($event)" >
+  <option *ngFor="let c of Index;let i = index" [value]="i"> {{c.display_name}} </option>
+</select>
+</div>
 
 <div >
+  <div [innerHTML]="Index[selectedIndex].description" > </div>
   <div *ngIf="isLoaded" id="chart-ag">
     <ag-charts-angular
       [options]="options"

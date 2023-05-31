@@ -136,9 +136,9 @@ export function population_smart_print(n: number){
   
 }
 
-export function tree_diff_v1(t1, t2, path: string[]){
+export function tree_diff_v1(t1, t2, path: string[], diff: any[]){
   if(!t1.hasOwnProperty("children") && !t2.hasOwnProperty("children"))
-    return;
+    return diff;
   if(t1.hash!=t2.hash)
   {
     if(t1.children[0].hasOwnProperty('children')){
@@ -149,7 +149,7 @@ export function tree_diff_v1(t1, t2, path: string[]){
           let path_new = path;
           path_new.push(t1.children[i].name);
           
-          tree_diff_v1(t1.children[i], t2.children[i], path_new);
+          tree_diff_v1(t1.children[i], t2.children[i], path_new, diff);
         }
       }
     }
@@ -159,12 +159,21 @@ export function tree_diff_v1(t1, t2, path: string[]){
       
       let diff12 = s1.filter(x => !s2.includes(x));
       let diff21 = s2.filter(x => !s1.includes(x));
-      console.log(JSON.stringify(path), diff12, diff21);
+
+      for (var leaf of diff12){
+        diff.push({Path: path, LeafName: leaf, Type: -1});
+      }
+        //diff.push(["-", leaf.name, ...path]);
+      for (var leaf of diff21)
+       diff.push({Path: path, LeafName: leaf, Type: +1});
+      // diff.push(["+", leaf.name, ...path]);
+      //console.log(JSON.stringify(path), diff12, diff21);
     }
+    return diff;
     
   }
   else 
-    return;
-  console.log()
+    return diff;
+  
 }
   
