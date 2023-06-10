@@ -1,6 +1,19 @@
 import { tree } from 'd3';
 import {Md5} from 'ts-md5';
 
+export interface Diff{
+  Path: string[],
+  LeafName: string,
+  Type: number
+}
+
+export interface Changelog{
+  Type: string,
+  Name: string,
+  Path_before: string[],
+  Path_after: string[]
+}
+
 export function decorate_tree(tree_root){
     let tree = decorate_tree_preliminary(tree_root);
     return decorate_tree_partition(tree, 0, 1);
@@ -48,8 +61,8 @@ function decorate_tree_preliminary(tree_root){
      // hashes.concat(Md5.hashStr(tree_root.name));
       hashes.sort();
 
-      
-      
+
+
       let total_hash = hashes.reduce((res, el) => {return res+el; }, "");
       return{name: tree_root.name, hash: Md5.hashStr(total_hash), total_value : total_value, children: children};
     }
@@ -133,7 +146,7 @@ export function population_smart_print(n: number){
     return N.toString()+' B';
   }
   return "0"
-  
+
 }
 
 export function tree_diff_v1(t1, t2, path: string[], diff: any[]){
@@ -146,9 +159,9 @@ export function tree_diff_v1(t1, t2, path: string[], diff: any[]){
       {
         if(t1.children[i].hash != t2.children[i].hash)
         {
-          let path_new = path;
+          let path_new = [...path];
           path_new.push(t1.children[i].name);
-          
+
           tree_diff_v1(t1.children[i], t2.children[i], path_new, diff);
         }
       }
@@ -156,24 +169,55 @@ export function tree_diff_v1(t1, t2, path: string[], diff: any[]){
     else{
       let s1 =t1.children.map(c=>{return c.name;});
       let s2 = t2.children.map(c=>{return c.name;});
-      
+
       let diff12 = s1.filter(x => !s2.includes(x));
       let diff21 = s2.filter(x => !s1.includes(x));
 
       for (var leaf of diff12){
-        diff.push({Path: path, LeafName: leaf, Type: -1});
+        diff.push({Path: path, LeafName: leaf, Type: -1} as Diff);
       }
         //diff.push(["-", leaf.name, ...path]);
       for (var leaf of diff21)
-       diff.push({Path: path, LeafName: leaf, Type: +1});
+       diff.push({Path: path, LeafName: leaf, Type: 1} as Diff);
       // diff.push(["+", leaf.name, ...path]);
       //console.log(JSON.stringify(path), diff12, diff21);
     }
     return diff;
-    
+
   }
-  else 
+  else
     return diff;
-  
+
 }
-  
+
+export function diffs_to_changelog(diffs: Diff[]): Changelog[]{
+  let so_far: string[] = [];
+  let changelog: Changelog[] = [];
+
+  diffs.forEach( diff => {
+
+    if(!so_far.includes(diff.LeafName))
+    {
+      var type = diff.Type;
+      var entries = diffs.filter(d => {return d.LeafName == diff.LeafName;});
+      if(entries.length == 2 && entries[0].Type*entries[1].Type < 0){
+        changelog.push({Type: "Move",
+          Name: diff.LeafName,
+          Path_before: entries[0].Type < 0 ? entries[0].Path : entries[1].Path,
+          Path_after: entries[0].Type < 0 ? entries[0].Path : entries[1].Path});
+      }
+      if(entries.length == 1){
+        changelog.push({Type: diff.Type < 0 ? "Delete" : "Create",
+          Name: diff.LeafName,
+          Path_before: diff.Type < 0 ? diff.Path : [],
+          Path_after:  diff.Type < 0 ? [] : diff.Path
+        });
+      }
+
+      so_far.push(diff.LeafName);
+    }
+
+  });
+
+  return changelog;
+}

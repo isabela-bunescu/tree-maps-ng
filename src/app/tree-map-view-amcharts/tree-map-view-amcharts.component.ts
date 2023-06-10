@@ -25,7 +25,7 @@ export class TreeMapViewAmchartsComponent {
   }
 
   ngOnInit(){
-    this.dfs.get_data('generate_data');
+    this.dfs.get_data('/data/json/world-population-normal');
     // define the relevant data fields
     this.chart = am4core.create("chartdiv", am4charts.TreeMap);
    
@@ -44,6 +44,7 @@ export class TreeMapViewAmchartsComponent {
         this.chart.dataFields.value = "value";
         this.chart.dataFields.name = "name";
         this.chart.dataFields.children = "children";
+        this.chart.maxLevels = 5;
         //this.chart.draw();
 
         let level1 = this.chart.seriesTemplates.create("1");

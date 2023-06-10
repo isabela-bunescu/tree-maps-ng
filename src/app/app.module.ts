@@ -8,12 +8,14 @@ import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { TreeMapViewAmchartsComponent } from './tree-map-view-amcharts/tree-map-view-amcharts.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TreeMapViewD3Component } from './tree-map-view-d3/tree-map-view-d3.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     TreeMapViewComponent,
-    TreeMapViewAmchartsComponent
+    TreeMapViewAmchartsComponent,
+    TreeMapViewD3Component
   ],
   imports: [
     BrowserModule,
