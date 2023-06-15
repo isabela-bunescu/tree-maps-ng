@@ -3,8 +3,9 @@ import * as d3 from 'd3';
 import { DataFetcherService } from '../data-fetcher.service';
 import { IndexEntry } from '../index-entry';
 import { Changelog, hslToRgb, population_smart_print } from '../extras';
-import { RectNode, TreeMapNode, data_to_rectangles, get_layout_names } from '../tree-map-node';
+import { RectNode, TreeMapNode, data_to_rectangles, get_layout_names, raw_data_to_trees } from '../tree-map-node';
 import { BuildTreeMap } from '../tree-map-node';
+
 
 @Component({
   selector: 'app-tree-map-view-d3',
@@ -28,30 +29,64 @@ export class TreeMapViewD3Component {
   public selectedIndex: number = 0;
   public selectedValue: string = "";
   public Index: IndexEntry[] = [];
-  public changelog_now: Changelog[] = [];
+  public changelog_now: Changelog[][] = [];
   public svg_handle;
+
+  public animation_duration: number = 1000;
+  public changelog_display: any[] = [];
 
   public update_to_new_chart(event) {
     this.isLoaded = false;
     //console.log(JSON.stringify(event));
-    this.dfs.get_data('data/json/' + this.Index[event].name);
+    this.dfs.fetch_data('data/json/' + this.Index[event].name)
+      .subscribe(data => {
+
+        [this.data, this.timesteps] = raw_data_to_trees(data);
+        console.log(this.data);
+        console.log(this.Layouts);
+        [this.rectangles, this.changelog_now] = data_to_rectangles(this.data, this.Layouts[0].Name);
+        this.selectedLayoutIndex = 0;
+        //console.log(JSON.stringify(this.data));
+
+        this.time_min = this.timesteps[0];
+        this.time_max = this.timesteps[this.timesteps.length - 1];
+        this.time_step = this.timesteps[1] - this.timesteps[0];
+        this.index_time = +0;
+        //console.log('result is: ', JSON.stringify(this.data, null, 4));
+
+        this.isLoaded = true;
+        //console.log(JSON.stringify(this.data[0]));
+        this.render(this.rectangles[this.index_time]);
+        if (this.playing) {
+          clearInterval(this.timer);
+          this.playing = false;
+        }
+
+      });
+
+
+
+    this.reset_view();
   }
 
   constructor(private dfs: DataFetcherService) {
     this.Layouts = get_layout_names();
-
+    this.changelog_display = [];
   }
 
   public reset_view(){
+    this.changelog_display = [];
     clearInterval(this.timer);
     this.playing = false;
     this.index_time = 0;
     this.index_time_prev = 0;
     this.render(this.rectangles[this.index_time]);
   }
+
   public update_to_new_layout(event) {
 
     let i: number = event;
+    [this.rectangles, this.changelog_now] = data_to_rectangles(this.data, this.Layouts[i].Name);
     this.reset_view();
   }
 
@@ -62,6 +97,16 @@ export class TreeMapViewD3Component {
 
         if (this.index_time + 1 < this.timesteps.length) {
 
+          this.changelog_display = this.changelog_now[this.index_time].map(el => {
+            if(el.Type=="Delete")
+              return {color: "danger", message: "Deleted the node "+el.Name + " from " + el.Path_before};
+            else if(el.Type=="Create")
+              return {color: "success", message: "Created the node "+el.Name + " in " + el.Path_after};
+            else
+              return {color: "warning", message: "Moved the node "+el.Name + " from " + el.Path_before + " to " + el.Path_after};
+            }
+          );
+
           this.animate(this.rectangles[this.index_time], this.rectangles[this.index_time + 1]);
 
           this.index_time++;
@@ -71,8 +116,9 @@ export class TreeMapViewD3Component {
         else {
           clearInterval(this.timer);
           this.playing = false;
+          this.changelog_display = [];
         }
-      }, 5 * 1000)
+      }, 1 * 1000)
     }
   }
 
@@ -82,7 +128,7 @@ export class TreeMapViewD3Component {
   }
 
   public update_index_time(event) {
-
+    this.changelog_display = [];
     this.index_time_prev = this.index_time;
     this.index_time = +event.target.value;
 
@@ -104,34 +150,40 @@ export class TreeMapViewD3Component {
 
 
 
-    this.dfs.callbackResponseIndex.subscribe(response => {
-      this.Index = this.dfs.entries;
+    this.dfs.fetch_index().subscribe(dta => {
+      this.Index = dta;
       this.selectedIndex = 0;
-      this.dfs.get_data('data/json/' + this.Index[this.selectedIndex].name);
+      this.dfs.fetch_data('data/json/' + this.Index[this.selectedIndex].name)
+      .subscribe(data => {
+
+        [this.data, this.timesteps] = raw_data_to_trees(data);
+        console.log(this.data);
+        console.log(this.Layouts);
+        [this.rectangles, this.changelog_now] = data_to_rectangles(this.data, this.Layouts[0].Name);
+
+        //console.log(JSON.stringify(this.data));
+
+        this.time_min = this.timesteps[0];
+        this.time_max = this.timesteps[this.timesteps.length - 1];
+        this.time_step = this.timesteps[1] - this.timesteps[0];
+        this.index_time = +0;
+        //console.log('result is: ', JSON.stringify(this.data, null, 4));
+
+        this.isLoaded = true;
+        //console.log(JSON.stringify(this.data[0]));
+        this.render(this.rectangles[this.index_time]);
+        if (this.playing) {
+          clearInterval(this.timer);
+          this.playing = false;
+        }
+
+      });
     });
 
-    this.dfs.callbackResponse.subscribe(response => {
 
-      this.data = this.dfs.data_as_tree();
-      this.rectangles = data_to_rectangles(this.data, "");
 
-      //console.log(JSON.stringify(this.data));
-      this.timesteps = this.dfs.timesteps;
-      this.time_min = this.timesteps[0];
-      this.time_max = this.timesteps[this.timesteps.length - 1];
-      this.time_step = this.timesteps[1] - this.timesteps[0];
-      this.index_time = +0;
-      //console.log('result is: ', JSON.stringify(this.data, null, 4));
 
-      this.isLoaded = true;
-      //console.log(JSON.stringify(this.data[0]));
-      this.render(this.rectangles[this.index_time]);
-      if (this.playing) {
-        clearInterval(this.timer);
-        this.playing = false;
-      }
 
-    });
   }
 
   public animate(rectangles_start: RectNode[], rectangles_end: RectNode[]) {
@@ -157,7 +209,7 @@ export class TreeMapViewD3Component {
       .attr("x", (r) => { return (r.x0).toString() + "%"; })
       .attr("y", (r) => { return (r.y0).toString() + "%"; })
       .attr("fill", (r) => { let rgb = hslToRgb(r.color_h, r.color_s, r.color_l); return "rgb(" + Math.round(rgb[0]) + ", " + Math.round(rgb[1]) + ", " + Math.round(rgb[2]) + ")"; })
-      .duration(5000);
+      .duration(this.animation_duration);
 
     d3.select('svg')
       .selectAll('text')

@@ -19,6 +19,7 @@ export class DataFetcherService {
   public timesteps = [0,0];
   public callbackResponse = new Subject();
   public callbackResponseIndex = new Subject();
+  public callback
   public entries: IndexEntry[] = [];
   public data_tree: TreeMapNode[] = [];
 
@@ -51,6 +52,7 @@ export class DataFetcherService {
     }
 
 
+
   public async get_index(){
 
 
@@ -58,6 +60,14 @@ export class DataFetcherService {
          this.entries = dta;
          this.callbackResponseIndex.next(true);
        });
+  }
+
+  public fetch_index(){
+    return this.http.get<any>(this.base_url + "data/index");
+  }
+
+  public fetch_data(path: string){
+    return this.http.get<any>(this.base_url + path);
   }
 
   public async get_data(path :string){
@@ -86,10 +96,6 @@ export class DataFetcherService {
     for(let d of this.data)
       lst.push(TreeConversion(d));
     this.data_tree = lst;
-
-
-
-
     return lst;
   }
 
@@ -128,5 +134,11 @@ export class DataFetcherService {
         rectangles[i] = rectangles[i].sort((a,b) => {return a.name.localeCompare(b.name); });
 
       return rectangles;
+    }
+
+    public remove_entry(name){
+
+      return this.http.delete(this.base_url + 'data/delete/' + name);
+
     }
 }

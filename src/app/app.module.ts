@@ -9,20 +9,27 @@ import { RouterModule } from '@angular/router';
 import { TreeMapViewAmchartsComponent } from './tree-map-view-amcharts/tree-map-view-amcharts.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TreeMapViewD3Component } from './tree-map-view-d3/tree-map-view-d3.component';
-
+import { DatasetsViewerComponent } from './datasets-viewer/datasets-viewer.component';
+import { HomeViewComponent } from './home-view/home-view.component';
+import { AlertModule } from '@coreui/angular';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 @NgModule({
   declarations: [
     AppComponent,
     TreeMapViewComponent,
     TreeMapViewAmchartsComponent,
-    TreeMapViewD3Component
+    TreeMapViewD3Component,
+    DatasetsViewerComponent,
+    HomeViewComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     AgChartsAngularModule,
     HttpClientModule,
-    FormsModule
+    FormsModule,
+    AlertModule,
+    BrowserAnimationsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

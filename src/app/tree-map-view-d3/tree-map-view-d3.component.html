@@ -1,51 +1,62 @@
 <div>
   <p></p>
   <label for="treemap-datasets">Choose a dataset: </label>
-<select id="treemap-datasets" [(ngModel)]="selectedIndex" (ngModelChange)="update_to_new_chart($event)" >
-  <option *ngFor="let c of Index;let i = index" [value]="i"> {{c.display_name}} </option>
-</select>
-<p> </p>
+  <select id="treemap-datasets" [(ngModel)]="selectedIndex" (ngModelChange)="update_to_new_chart($event)">
+    <option *ngFor="let c of Index;let i = index" [value]="i"> {{c.display_name}} </option>
+  </select>
+  <p> </p>
   <label for="treemap-layouts">Choose a layout: </label>
-<select *ngIf="isLoaded" id="treemap-layouts" [(ngModel)]="selectedLayoutIndex" (ngModelChange)="update_to_new_layout($event)" >
-  <option *ngFor="let c of Layouts;let i = index" [value]="i"> {{c.DisplayName}} </option>
-</select>
+  <select *ngIf="isLoaded" id="treemap-layouts" [(ngModel)]="selectedLayoutIndex"
+    (ngModelChange)="update_to_new_layout($event)">
+    <option *ngFor="let c of Layouts;let i = index" [value]="i"> {{c.DisplayName}} </option>
+  </select>
 
 </div>
 
 
 
 
-<div >
-  <div [innerHTML]="Index[selectedIndex].description" > </div>
-  <div width="100vw" height="50vh" >
+<div>
+  <div [innerHTML]="Index[selectedIndex].description"> </div>
+  <div width="100vw" height="50vh">
 
-     <svg id="window" width="100vw" height="50vh">
+    <svg id="window" width="100vw" height="50vh">
       <g></g>
       <foreignObject>
-    <div id="tooltip" class="">
-    <p><strong>Name</strong></p>
-    <p><span id="value"></span></p>
-  </div>
+        <div id="tooltip" class="">
+          <p><strong>Name</strong></p>
+          <p><span id="value"></span></p>
+        </div>
       </foreignObject>
     </svg>
   </div>
 
-    <div *ngIf="!isLoaded" class="d-flex justify-content-center">
-      <div class="spinner-border text-primary" role="status">
-          <span class="sr-only"></span>
-      </div>
+  <div *ngIf="!isLoaded" class="d-flex justify-content-center">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only"></span>
+    </div>
   </div>
-  <div *ngIf="isLoaded" class="d-flex flex-column justify-content-center">
-    <label for="customRange3" class="form-label">Year</label>
-    <input type="range" class="form-range" [min]="0" [max]="timesteps.length-1" [step]="1" [value]="index_time" id="customRange3" oninput=""  (input)="update_index_time($event);" >
-    <output >{{timesteps[index_time]}}</output>
-  </div>
-  <div class="d-flex flex-row justify-content-center">
-    <div class="p-2">
+
+  <div class="justify-content-center" style="display: flex; align-content: center;">
+    <div *ngIf="isLoaded" class="d-flex flex-column justify-content-center">
+      <label for="customRange3" class="form-label" style="position: absolute;">Year: {{timesteps[index_time]}}</label>
+      <input type="range" class="form-range" style="padding-left: 100px; width: 50vw; padding-right: 50px;" [min]="0" [max]="timesteps.length-1" [step]="1" [value]="index_time"
+        id="customRange3" oninput="" (input)="update_index_time($event);">
+    </div>
+    <div class="d-flex flex-row justify-content-right">
+      <div class="p-2">
         <button (click)="start()" type="button" class="btn btn-success">Play</button>
-    </div>
-    <div class="p-2">
+      </div>
+      <div class="p-2">
         <button (click)="pause()" type="button" class="btn btn-danger">Pause</button>
+      </div>
     </div>
-</div>
+  </div>
+
+
+
+
+    <div class="d-flex flex-column justify-content-center" *ngFor="let element of changelog_display">
+      <c-alert style="height: 15px;" [color]="element.color" dismissible="false">{{element.message}}</c-alert>
+    </div>
 </div>

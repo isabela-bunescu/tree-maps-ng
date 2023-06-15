@@ -1,5 +1,6 @@
-import { TreemapLayout } from "d3";
-import { Changelog, Diff, diffs_to_changelog } from './extras';
+import { TreemapLayout, partition } from "d3";
+import { Changelog, Diff, decorate_tree, diffs_to_changelog } from './extras';
+import { order } from "@amcharts/amcharts4/.internal/core/utils/Number";
 
 export interface TreeMapNode {
   name: string,
@@ -24,6 +25,22 @@ export interface RectNode {
   color_l: number
 }
 
+export function raw_data_to_trees(data: any): [TreeMapNode[], number[]]{
+  let d = data.map(
+      (el)=>{ return {time: el.time, ...decorate_tree(el)}; }
+    )
+      .map(
+      (el) => {return TreeConversion(el); }
+    )
+
+  let timesteps = data.map(el => {
+    return el.time;
+  });
+
+  return [d,timesteps];
+
+}
+
 export function TreeConversion(tree_root: any): TreeMapNode {
 
   if (tree_root.hasOwnProperty("children")) {
@@ -43,7 +60,7 @@ export function TreeConversion(tree_root: any): TreeMapNode {
 
 export function SliceAndDiceTreeMapCont(tree: TreeMapNode, tree_ref: TreeMapNode, parent_division: any): RectNode[] {
   if (tree.leaf)
-    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 50 } as RectNode]
+    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (parent_division.cmin + parent_division.cmax) / 2) + 300) % 360, color_s: 50, color_l: 50 } as RectNode]
   else {
     let start, end, new_slice;
     if (parent_division.slice == 0) {
@@ -61,16 +78,38 @@ export function SliceAndDiceTreeMapCont(tree: TreeMapNode, tree_ref: TreeMapNode
     let val = tree.children.reduce((pv, ch) => { return pv + ch.value; }, 0);
     let so_far = 0;
 
-    for (let i = 0; i < tree.children.length; i++) {
-      let c = tree.children[i];
+    let ordered = tree_ref.children.map(el => { return {value: el.value, name: el.name}; });
+
+    ordered = ordered.filter((el) => {
+      return tree.children.filter(el2 => {
+          return el2.name == el.name;
+        }).length > 0;
+    });
+
+    ordered = ordered.concat(tree.children.filter(el => {
+        return ordered.filter(el2 => {return el.name == el2.name; }).length == 0;
+    })
+    .map(el => { return {value: el.value, name: el.name}; }));
+
+    ordered = ordered.sort((a,b)=>{return a.value-b.value;});
+    let cstart = parent_division.cmin;
+
+    for(let o of ordered){
+      let c = tree.children.find(el=>{return el.name==o.name;}) as TreeMapNode;
+      let tr = tree_ref.children.find(el => {return el.name == o.name;}) as TreeMapNode;
+    //for (let i = 0; i < tree.children.length; i++) {
+      //let c = tree.children[i];
 
       let delta = (c.value / val) * (end - start);
+      let delta_c = c.value / val * (parent_division.cmax - parent_division.cmin)
+
       if (parent_division.slice == 0)
-        arr = arr.concat(SliceAndDiceTreeMapCont(c, tree_ref, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice }))
+        arr = arr.concat(SliceAndDiceTreeMapCont(c, tr, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice, cmin: cstart, cmax: cstart+delta_c }))
 
       if (parent_division.slice == 1)
-        arr = arr.concat(SliceAndDiceTreeMapCont(c, tree_ref, { x0: parent_division.x0, x1: parent_division.x1, y0: start + so_far, y1: start + so_far + delta, slice: new_slice }))
+        arr = arr.concat(SliceAndDiceTreeMapCont(c, tr, { x0: parent_division.x0, x1: parent_division.x1, y0: start + so_far, y1: start + so_far + delta, slice: new_slice, cmin: cstart, cmax: cstart+delta_c }))
       so_far += delta;
+      cstart += delta_c;
     }
     return arr;
   }
@@ -139,6 +178,7 @@ export function BuildTreeMap(tree: TreeMapNode, type: string, parent_division: a
       let delta = (c.value / val) * (end - start);
       if (parent_division.slice == 0)
         arr = arr.concat(BuildTreeMap(c, type, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice }))
+        arr = arr.concat(BuildTreeMap(c, type, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice }))
 
       if (parent_division.slice == 1)
         arr = arr.concat(BuildTreeMap(c, type, { x0: parent_division.x0, x1: parent_division.x1, y0: start + so_far, y1: start + so_far + delta, slice: new_slice }))
@@ -149,11 +189,11 @@ export function BuildTreeMap(tree: TreeMapNode, type: string, parent_division: a
 }
 
 export function get_layout_names(): any[] {
-  return [{ DisplayName: "Slice & dice horizontal", Description: "Slice and dice algorithm starting with horizontal division." },
-  { DisplayName: "Slice & dice vertical", Description: "Slice and dice algorithm starting with vertical division." }];
+  return [{ Name: "s&d_h", DisplayName: "Slice & dice horizontal", Description: "Slice and dice algorithm starting with horizontal division." },
+  { Name: "s&d_v",  DisplayName: "Slice & dice vertical", Description: "Slice and dice algorithm starting with vertical division." }];
 }
 
-export function data_to_rectangles(trees: TreeMapNode[], layout: string): RectNode[][] {
+export function data_to_rectangles(trees: TreeMapNode[], layout: string): [RectNode[][], Changelog[][]] {
 
   let changelogs: any[] = [];
   for (let i = 0; i < trees.length - 1; i++) {
@@ -167,7 +207,12 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: string): RectNo
 
   // build treemap and get list of names
   for (let i = 0; i < trees.length; ++i) {
-    rectangles.push(BuildTreeMap(trees[i], "", { x0: 0, x1: 100, y0: 0, y1: 100, slice: 0 }));
+    console.log(layout);
+    if(layout=="s&d_h")
+      rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: 100, y0: 0, y1: 100, slice: 1, cmin: 0, cmax : 1 }));
+    if(layout=="s&d_v")
+      rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: 100, y0: 0, y1: 100, slice: 0, cmin: 0, cmax : 1 }));
+    //rectangles.push(BuildTreeMap(trees[i], "", { x0: 0, x1: 100, y0: 0, y1: 100, slice: 0 }));
     rectangles[i].map(el => { unique_names.add(el.name); });
   }
 
@@ -180,16 +225,17 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: string): RectNo
         to_add.push(el);
     });
 
-    for (let n in to_add)
-      rectangles[i].push({ name: n, value: 0, x0: 0, x1: 0, y0: 0, y1: 0, color: "white", color_h: 0, color_s: 0, color_l: 100 } as RectNode);
+    for (let n of to_add){
 
+      rectangles[i].push({ name: n, value: 0, x0: 0, x1: 0, y0: 0, y1: 0, color: "white", color_h: 0, color_s: 0, color_l: 100 } as RectNode);
+    }
   }
 
   // sort by name
   for (let i = 0; i < rectangles.length; i++)
     rectangles[i] = rectangles[i].sort((a, b) => { return a.name.localeCompare(b.name); });
 
-  return rectangles;
+  return [rectangles, changelogs];
 }
 
 export function TreeDiff_1(t1: TreeMapNode, t2: TreeMapNode, path: string[], diff: any[]) {
