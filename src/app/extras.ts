@@ -8,7 +8,7 @@ export interface Diff{
 }
 
 export interface Changelog{
-  Type: string,
+  Type: string,  // can be "Create", "Delete", "Move"
   Name: string,
   Path_before: string[],
   Path_after: string[]

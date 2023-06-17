@@ -17,7 +17,7 @@
 
 
 <div>
-  <div [innerHTML]="Index[selectedIndex].description"> </div>
+  <div *ngIf="isLoaded" [innerHTML]="Index[selectedIndex].description"> </div>
   <div width="100vw" height="50vh">
 
     <svg id="window" width="100vw" height="50vh">
