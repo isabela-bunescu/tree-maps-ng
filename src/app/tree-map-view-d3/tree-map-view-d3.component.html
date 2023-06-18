@@ -17,7 +17,7 @@
 
 
 <div>
-  <div *ngIf="isLoaded" [innerHTML]="Index[selectedIndex].description"> </div>
+  <div *ngIf="isLoaded" [innerHTML]=""> <b>Dataset description:</b> {{Index[selectedIndex].description}}</div>
   <div width="100vw" height="50vh">
 
     <svg id="window" width="100vw" height="50vh">
@@ -37,8 +37,8 @@
     </div>
   </div>
 
-  <div class="justify-content-center" style="display: flex; align-content: center;">
-    <div *ngIf="isLoaded" class="d-flex flex-column justify-content-center">
+  <div *ngIf="isLoaded" class="justify-content-center" style="display: flex; align-content: center;">
+    <div  class="d-flex flex-column justify-content-center">
       <label for="customRange3" class="form-label" style="position: absolute;">Year: {{timesteps[index_time]}}</label>
       <input type="range" class="form-range" style="padding-left: 100px; width: 50vw; padding-right: 50px;" [min]="0" [max]="timesteps.length-1" [step]="1" [value]="index_time"
         id="customRange3" oninput="" (input)="update_index_time($event);">
@@ -49,6 +49,10 @@
       </div>
       <div class="p-2">
         <button (click)="pause()" type="button" class="btn btn-danger">Pause</button>
+      </div>
+      <div class="form-outline">
+        <input min="500" max="9000" step="500" type="number" id="typeNumber" [readOnly]="this.playing" class="form-control" [(ngModel)]="this.animation_duration" />
+        <label class="form-label" for="typeNumber">Duration of transition (ms)</label>
       </div>
     </div>
   </div>

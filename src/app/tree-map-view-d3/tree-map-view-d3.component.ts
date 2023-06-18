@@ -91,16 +91,16 @@ export class TreeMapViewD3Component {
     this.reset_view();
   }
 
-  
+
 
   public start() {
     if (!this.playing) {
       this.playing = true;
-      
+
       let callback_timer = () => {
-        
+
         if (this.index_time + 1 < this.timesteps.length) {
-    
+
           this.changelog_display = this.changelog_now[this.index_time].map(el => {
             if (el.Type == "Delete")
               return { color: "danger", message: "Deleted the node " + el.Name + " from " + el.Path_before };
@@ -110,11 +110,11 @@ export class TreeMapViewD3Component {
               return { color: "warning", message: "Moved the node " + el.Name + " from " + el.Path_before + " to " + el.Path_after };
           }
           );
-    
+
           this.animate_new(this.rectangles[this.index_time], this.rectangles[this.index_time + 1]);
-    
+
           this.index_time++;
-    
+
         }
         else {
           clearInterval(this.timer);
@@ -221,13 +221,13 @@ export class TreeMapViewD3Component {
 
         let ret: (t: number) => void = (t) => { };
 
-       
+
         if (d.end.transition == Change.Delete) {
           //i_h = d3.interpolate(currentAngle, currentAngle);
           //i_l = (t) => { return t < 1/3 ? 100*Math.sin(9*Math.PI/4*t+Math.PI/4) : 0; };
           ret = (t) => {
             let hue_angle = d.start.color_h;
-            let lum = Math.round(interp_hat(t, 0, 1 / 6, 1 / 3, d.start.color_l, 100, 0));
+            let lum = Math.round(interp_hat(t, 0, 1 / 6, 1 / 3, d.start.color_l, 0, 50));
             let alpha: number = interp_lin(t, 1/6, 1 / 3, d.start.color_a, 0.0);
             d3.select(this)
               .attr('fill', "hsla(" + hue_angle + ", " + d.end.color_s + "%, " + lum + "%, " + alpha + ")")
@@ -236,11 +236,17 @@ export class TreeMapViewD3Component {
         }
         else if (d.end.transition == Change.Create) {
           ret = (t) => {
-            let hue_angle = d.start.color_h;
-            let lum = Math.round(interp_hat(t, 2 / 3, 2 / 3 + 1 / 6, 1, d.end.color_l, 100, d.end.color_l));
-            let alpha: number = interp_lin(t, 2 / 3, 2/3+1/6, 0.0, 1.0);
+
+            let hue_angle = d.end.color_h;
+            let sat = Math.round(interp_hat(t, 2 / 3, 2 / 3 + 1 / 6, 1, d.end.color_s, 100, d.end.color_s));
+            let alpha: number = interp_lin(t, 2 / 3, 2/3+1/10, 0.0, 1.0);
+            //console.log(hue_angle, sat, alpha)
             d3.select(this)
-              .attr('fill', "hsla(" + hue_angle + ", " + d.end.color_s + "%, " + lum + "%, " + alpha + ")")
+              .attr('fill', "hsla(" + hue_angle + ", " + sat + "%, " + d.end.color_l + "%, " + alpha + ")")
+              .attr("x", d.end.x0.toString() + "%")
+              .attr("y", d.end.y0.toString() + "%")
+              .attr("width", (d.end.x1-d.end.x0).toString() + "%")
+              .attr("height", (d.end.y1-d.end.y0).toString() + "%")
           }
         }
         else if (d.end.transition == Change.Move) {
@@ -250,16 +256,16 @@ export class TreeMapViewD3Component {
             let y: number = interp_lin(t, 1 / 3, 2 / 3, d.start.y0, d.end.y0);
             let w: number = interp_lin(t, 1 / 3, 2 / 3, d.start.x1 - d.start.x0, d.end.x1 - d.end.x0);
             let h: number = interp_lin(t, 1 / 3, 2 / 3, d.start.y1 - d.start.y0, d.end.y1 - d.end.y0);
-            let lum: number = interp_hat(t, 1 / 3, 1 / 6, 2 / 3, d.start.color_l, 100, d.end.color_l);
+            let sat: number = interp_hat(t, 1 / 3, 1 / 6, 2 / 3, d.start.color_l, 100, d.end.color_l);
 
             d3.select(this)
-              .attr('fill', "hsla(" + hue_angle + ", " + d.end.color_s + "%, " + lum + "%, " + d.start.color_a + ")")
+              .attr('fill', "hsla(" + hue_angle + ", " + sat + "%, " + d.end.color_l + "%, " + d.start.color_a + ")")
               .attr("x", x.toString() + "%")
               .attr("y", y.toString() + "%")
               .attr("width", w.toString() + "%")
               .attr("height", h.toString() + "%")
           }
-        } else // if (d.end.transition == Change.None) 
+        } else // if (d.end.transition == Change.None)
         {
           ret = (t) => {
             let hue_angle: number = Math.round(interp_lin(t, 1 / 3, 2 / 3, currentAngle, targetAngle)) % 360;
