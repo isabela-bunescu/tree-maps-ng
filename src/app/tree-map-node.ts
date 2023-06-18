@@ -2,6 +2,12 @@ import { TreemapLayout, partition } from "d3";
 import { Changelog, Diff, decorate_tree, diffs_to_changelog } from './extras';
 import { order } from "@amcharts/amcharts4/.internal/core/utils/Number";
 
+export enum Change{
+  None = 0,
+  Move = 1,
+  Create = 2,
+  Delete = 3
+}
 export interface TreeMapNode {
   name: string,
   value: number,
@@ -22,7 +28,9 @@ export interface RectNode {
   color: string,
   color_h: number,
   color_s: number,
-  color_l: number
+  color_l: number,
+  color_a: number,
+  transition?: Change
 }
 
 export function raw_data_to_trees(data: any): [TreeMapNode[], number[]] {
@@ -60,7 +68,7 @@ export function TreeConversion(tree_root: any): TreeMapNode {
 
 export function SliceAndDiceTreeMapCont(tree: TreeMapNode, tree_ref: TreeMapNode, parent_division: any): RectNode[] {
   if (tree.leaf)
-    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (parent_division.cmin + parent_division.cmax) / 2) + 300) % 360, color_s: 50, color_l: 40 } as RectNode]
+    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (parent_division.cmin + parent_division.cmax) / 2) + 300) % 360, color_s: 50, color_l: 40, color_a: 1.0 , transition: Change.None} as RectNode]
   else {
     let start, end, new_slice;
     if (parent_division.slice == 0) {
@@ -118,7 +126,7 @@ export function SliceAndDiceTreeMapCont(tree: TreeMapNode, tree_ref: TreeMapNode
 
 export function SliceAndDiceTreeMap(tree: TreeMapNode, parent_division: any): RectNode[] {
   if (tree.leaf)
-    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 50 } as RectNode]
+    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 50, color_a: 1.0, transition: Change.None} as RectNode]
   else {
     let start, end, new_slice;
     if (parent_division.slice == 0) {
@@ -154,7 +162,7 @@ export function SliceAndDiceTreeMap(tree: TreeMapNode, parent_division: any): Re
 
 export function BuildTreeMap(tree: TreeMapNode, type: string, parent_division: any): RectNode[] {
   if (tree.leaf)
-    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 50 } as RectNode]
+    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 50, color_a: 1.0, transition: Change.None } as RectNode]
   else {
     let start, end, new_slice;
     if (parent_division.slice == 0) {
@@ -227,7 +235,7 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: string): [RectN
 
     for (let n of to_add) {
 
-      rectangles[i].push({ name: n, value: 0, x0: 0, x1: 0, y0: 0, y1: 0, color: "white", color_h: 0, color_s: 0, color_l: 100 } as RectNode);
+      rectangles[i].push({ name: n, value: 0, x0: 0, x1: 0, y0: 0, y1: 0, color: "white", color_h: 0, color_s: 0, color_l: 100, color_a: 0.0, transition: Change.None } as RectNode);
     }
   }
 
@@ -237,28 +245,32 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: string): [RectN
 
 
 
-  for (let i = 0; i < rectangles.length - 1; i++) {
+  for (let i = 1; i < rectangles.length ; i++) {
     for (let k = 0; k < rectangles[i].length; k++) {
-      let filtered = changelogs[i].filter((el) => { return el.Name == rectangles[i][k].name; });
+      let filtered = changelogs[i-1].filter((el) => { return el.Name == rectangles[i][k].name; });
 
       if (filtered.length > 0) {
-        console.log(filtered)
         if (filtered[0].Type == "Create") {
+          console.log("CREATE ", rectangles[i-1][k].name, rectangles[i][k].name)
           //between i-1 and i, the k-th rectangle appeared
           rectangles[i-1][k].color_l = 100;
           rectangles[i-1][k].y0 = 0;
           rectangles[i-1][k].y1 = 1;
-          console.log("CREATEEEEED");
+          rectangles[i][k].transition = Change.Create;
+        
 
         }
         else if (filtered[0].Type == "Delete") {
+          console.log("DELETE ", rectangles[i-1][k].name, rectangles[i][k].name)
           // something disappeared between i-1 and i.
           rectangles[i][k].color_l = 0;
           rectangles[i][k].color_s = 100;
+          rectangles[i][k].transition = Change.Delete;
 
         }
         else if (filtered[0].Type == "Move") {
-
+          console.log("MOVE ", rectangles[i-1][k].name, rectangles[i][k].name)
+          rectangles[i][k].transition = Change.Move;
         }
       }
     }
