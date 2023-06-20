@@ -32,8 +32,9 @@ export class TreeMapViewD3Component {
   public Index: IndexEntry[] = [];
   public changelog_now: Changelog[][] = [];
   public svg_handle;
-
+  public wait_multiple: number = 0;
   public animation_duration: number = 6000;
+  public animation_duration_change: number = 6000;
   public changelog_display: any[] = [];
 
   public update_to_new_chart(event) {
@@ -94,10 +95,20 @@ export class TreeMapViewD3Component {
 
 
   public start() {
+    this.wait_multiple = 0;
+    this.animation_duration_change = 6*this.animation_duration;
     if (!this.playing) {
       this.playing = true;
 
       let callback_timer = () => {
+        if(this.changelog_now[this.index_time].length == 0)
+          this.wait_multiple = 0;
+        else
+          this.wait_multiple ++;
+        if(this.wait_multiple == 6) {this.wait_multiple = 0; return;}
+        if(this.wait_multiple > 1) return;
+
+        console.log(this.wait_multiple);
 
         if (this.index_time + 1 < this.timesteps.length) {
 
@@ -111,8 +122,9 @@ export class TreeMapViewD3Component {
           }
           );
 
-          this.animate_new(this.rectangles[this.index_time], this.rectangles[this.index_time + 1]);
+          this.animate_new(this.rectangles[this.index_time], this.rectangles[this.index_time + 1], this.changelog_now[this.index_time].length > 0 );
 
+          if(this.changelog_now[this.index_time].length == 0 || this.changelog_now[this.index_time].length == 6)
           this.index_time++;
 
         }
@@ -184,7 +196,12 @@ export class TreeMapViewD3Component {
 
   }
 
-  public animate_new(rectangles_start: RectNode[], rectangles_end: RectNode[]) {
+  public animate_new(rectangles_start: RectNode[], rectangles_end: RectNode[], modification: boolean) {
+    let duration_this: number;
+    if(modification)
+      duration_this = this.animation_duration_change;
+    else
+      duration_this = this.animation_duration;
     var g = this.svg_handle.selectAll(".rect")
       .data(rectangles_end)
       .enter()
@@ -203,7 +220,7 @@ export class TreeMapViewD3Component {
       //.attr("x", (r) => { return (r.end.x0).toString() + "%"; })
       //.attr("y", (r) => { return (r.end.y0).toString() + "%"; })
       //.attr("fill", (r) => { let rgb = hslToRgb(r.end.color_h, r.end.color_s, r.end.color_l); return "rgb(" + Math.round(rgb[0]) + ", " + Math.round(rgb[1]) + ", " + Math.round(rgb[2]) + ")"; })
-      .duration(this.animation_duration)
+      .duration(duration_this)
       .tween('coloring', function (d) {
         let currentAngle = d.start.color_h;
         let targetAngle = d.end.color_h;
