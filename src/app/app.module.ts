@@ -13,6 +13,8 @@ import { DatasetsViewerComponent } from './datasets-viewer/datasets-viewer.compo
 import { HomeViewComponent } from './home-view/home-view.component';
 import { AlertModule } from '@coreui/angular';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { Text } from '@visx/text';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -29,7 +31,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     HttpClientModule,
     FormsModule,
     AlertModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

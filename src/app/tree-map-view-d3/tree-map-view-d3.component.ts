@@ -5,7 +5,7 @@ import { IndexEntry } from '../index-entry';
 import { Changelog, hslToRgb, population_smart_print } from '../extras';
 import { Change, RectNode, TreeMapNode, data_to_rectangles, get_layout_names, raw_data_to_trees } from '../tree-map-node';
 import { BuildTreeMap } from '../tree-map-node';
-
+import { Text } from '@visx/text';
 
 @Component({
   selector: 'app-tree-map-view-d3',
@@ -33,10 +33,15 @@ export class TreeMapViewD3Component {
   public changelog_now: Changelog[][] = [];
   public svg_handle;
   public wait_multiple: number = 0;
-  public animation_duration: number = 6000;
-  public animation_duration_change: number = 6000;
+  public animation_duration: number = 1000;
+  public animation_duration_change: number = 1000;
   public changelog_display: any[] = [];
 
+/**
+ * change dataset. A request to the server is made
+ * Index is the array of datasets
+ * @param event the index of Index array (dropdown menu)
+ */
   public update_to_new_chart(event) {
     this.isLoaded = false;
     //console.log(JSON.stringify(event));
@@ -86,7 +91,6 @@ export class TreeMapViewD3Component {
   }
 
   public update_to_new_layout(event) {
-
     let i: number = event;
     [this.rectangles, this.changelog_now] = data_to_rectangles(this.data, this.Layouts[i].Name);
     this.reset_view();
@@ -105,10 +109,10 @@ export class TreeMapViewD3Component {
           this.wait_multiple = 0;
         else
           this.wait_multiple ++;
-        if(this.wait_multiple == 6) {this.wait_multiple = 0; return;}
+        if(this.wait_multiple == 6) {  this.index_time++; this.wait_multiple = 0; return;}
         if(this.wait_multiple > 1) return;
 
-        console.log(this.wait_multiple);
+        //console.log(this.wait_multiple);
 
         if (this.index_time + 1 < this.timesteps.length) {
 
@@ -125,7 +129,7 @@ export class TreeMapViewD3Component {
           this.animate_new(this.rectangles[this.index_time], this.rectangles[this.index_time + 1], this.changelog_now[this.index_time].length > 0 );
 
           if(this.changelog_now[this.index_time].length == 0 || this.changelog_now[this.index_time].length == 6)
-          this.index_time++;
+            this.index_time++;
 
         }
         else {
@@ -244,8 +248,8 @@ export class TreeMapViewD3Component {
           //i_l = (t) => { return t < 1/3 ? 100*Math.sin(9*Math.PI/4*t+Math.PI/4) : 0; };
           ret = (t) => {
             let hue_angle = d.start.color_h;
-            let lum = Math.round(interp_hat(t, 0, 1 / 6, 1 / 3, d.start.color_l, 0, 50));
-            let alpha: number = interp_lin(t, 1/6, 1 / 3, d.start.color_a, 0.0);
+            let lum = Math.round(interp_hat(t, 0, 1 / 6-1/20, 1 / 3-1/20, d.start.color_l, 0, 50));
+            let alpha: number = interp_lin(t, 1/6-1/20, 1 / 3-1/20, d.start.color_a, 0.0);
             d3.select(this)
               .attr('fill', "hsla(" + hue_angle + ", " + d.end.color_s + "%, " + lum + "%, " + alpha + ")")
           }
@@ -255,8 +259,8 @@ export class TreeMapViewD3Component {
           ret = (t) => {
 
             let hue_angle = d.end.color_h;
-            let sat = Math.round(interp_hat(t, 2 / 3, 2 / 3 + 1 / 6, 1, d.end.color_s, 100, d.end.color_s));
-            let alpha: number = interp_lin(t, 2 / 3, 2/3+1/10, 0.0, 1.0);
+            let sat = Math.round(interp_hat(t, 2 / 3+1/10, 2 / 3 + 1 / 6, 1, d.end.color_s, 100, d.end.color_s));
+            let alpha: number = interp_lin(t, 2 / 3+1/10, 2/3+2/10, 0.0, 1.0);
             //console.log(hue_angle, sat, alpha)
             d3.select(this)
               .attr('fill', "hsla(" + hue_angle + ", " + sat + "%, " + d.end.color_l + "%, " + alpha + ")")
@@ -268,12 +272,12 @@ export class TreeMapViewD3Component {
         }
         else if (d.end.transition == Change.Move) {
           ret = (t) => {
-            let hue_angle: number = Math.round(interp_lin(t, 1 / 3, 2 / 3, currentAngle, targetAngle)) % 360;
-            let x: number = interp_lin(t, 1 / 3, 2 / 3, d.start.x0, d.end.x0);
-            let y: number = interp_lin(t, 1 / 3, 2 / 3, d.start.y0, d.end.y0);
-            let w: number = interp_lin(t, 1 / 3, 2 / 3, d.start.x1 - d.start.x0, d.end.x1 - d.end.x0);
-            let h: number = interp_lin(t, 1 / 3, 2 / 3, d.start.y1 - d.start.y0, d.end.y1 - d.end.y0);
-            let sat: number = interp_hat(t, 1 / 3, 1 / 6, 2 / 3, d.start.color_l, 100, d.end.color_l);
+            let hue_angle: number = Math.round(interp_lin(t, 1 / 3+1/20, 2 / 3-1/20, currentAngle, targetAngle)) % 360;
+            let x: number = interp_lin(t, 1 / 3+1/20, 2 / 3-1/20, d.start.x0, d.end.x0);
+            let y: number = interp_lin(t, 1 / 3+1/20, 2 / 3-1/20, d.start.y0, d.end.y0);
+            let w: number = interp_lin(t, 1 / 3+1/20, 2 / 3-1/20, d.start.x1 - d.start.x0, d.end.x1 - d.end.x0);
+            let h: number = interp_lin(t, 1 / 3+1/20, 2 / 3-1/20, d.start.y1 - d.start.y0, d.end.y1 - d.end.y0);
+            let sat: number = interp_hat(t, 1 / 3+1/20, 1 / 6, 2 / 3-1/20, d.start.color_l, 100, d.end.color_l);
 
             d3.select(this)
               .attr('fill', "hsla(" + hue_angle + ", " + sat + "%, " + d.end.color_l + "%, " + d.start.color_a + ")")
@@ -285,11 +289,11 @@ export class TreeMapViewD3Component {
         } else // if (d.end.transition == Change.None)
         {
           ret = (t) => {
-            let hue_angle: number = Math.round(interp_lin(t, 1 / 3, 2 / 3, currentAngle, targetAngle)) % 360;
-            let x: number = interp_lin(t, 1 / 3, 2 / 3, d.start.x0, d.end.x0);
-            let y: number = interp_lin(t, 1 / 3, 2 / 3, d.start.y0, d.end.y0);
-            let w: number = interp_lin(t, 1 / 3, 2 / 3, d.start.x1 - d.start.x0, d.end.x1 - d.end.x0);
-            let h: number = interp_lin(t, 1 / 3, 2 / 3, d.start.y1 - d.start.y0, d.end.y1 - d.end.y0);
+            let hue_angle: number = Math.round(interp_lin(t, 1 / 3+1/20, 2 / 3-1/20, currentAngle, targetAngle)) % 360;
+            let x: number = interp_lin(t, 1 / 3+1/20, 2 / 3, d.start.x0, d.end.x0);
+            let y: number = interp_lin(t, 1 / 3+1/20, 2 / 3-1/20, d.start.y0, d.end.y0);
+            let w: number = interp_lin(t, 1 / 3+1/20, 2 / 3-1/20, d.start.x1 - d.start.x0, d.end.x1 - d.end.x0);
+            let h: number = interp_lin(t, 1 / 3+1/20, 2 / 3-1/20, d.start.y1 - d.start.y0, d.end.y1 - d.end.y0);
 
             d3.select(this)
               .attr('fill', "hsla(" + hue_angle + ", " + d.end.color_s + "%, " + d.end.color_l + "%, " + d.start.color_a + ")")
@@ -313,13 +317,41 @@ export class TreeMapViewD3Component {
     d3.select('svg')
       .selectAll('text')
       .data(rectangles_start)
+      .attr("class", "dotme")
       .attr("x", (d) => { return (d.x0 / 2 + d.x1 / 2).toString() + "%"; })
       .attr("y", (d) => { return (d.y0 / 2 + d.y1 / 2).toString() + "%"; })
-      //.attr("textLength", (d) => { return (d.x1-d.x0).toString()+"%"; } )
-      .attr("dy", ".35em")
+      .attr("width", (d) => { return (d.x1-d.x0).toString()+"%"; } )
       .text(function (d) { return d.name + " - " + population_smart_print(d.value); });
 
   }
+ /* public dottext(text: any){
+
+
+      text.each(function() {
+          var text = d3.select(this);
+          var words = text.text().split(/\s+/);
+
+          var ellipsis = text.text('').append('tspan').attr('class', 'elip').text('...');
+          var width = parseFloat(text.attr('width')) - ellipsis.node().getComputedTextLength();
+          var numWords = words.length;
+
+          var tspan = text.insert('tspan', ':first-child').text(words.join(' '));
+
+          // Try the whole line
+          // While it's too long, and we have words left, keep removing words
+
+          while (tspan.node().getComputedTextLength() > width && words.length) {
+              words.pop();
+              tspan.text(words.join(' '));
+          }
+
+          if (words.length === numWords) {
+              ellipsis.remove();
+          }
+      });
+  }*/
+
+
 
   public animate(rectangles_start: RectNode[], rectangles_end: RectNode[]) {
 
@@ -408,14 +440,19 @@ export class TreeMapViewD3Component {
       })
 
     g.append("text")
-      .attr("text-anchor", "middle")
+      //.attr("text-anchor", "middle")
       .attr("fill", "white")
       .attr("x", (d) => { return (d.x0 / 2 + d.x1 / 2).toString() + "%"; })
       .attr("y", (d) => { return (d.y0 / 2 + d.y1 / 2).toString() + "%"; })
       //.attr("textLength", (d) => { return (d.x1-d.x0).toString()+"%"; } )
-      .attr("dy", ".35em")
-      .text(function (d) { return d.name + " - " + population_smart_print(d.value); });
+     // .attr("width", "1")
+      .text((d) => {
+        //let text = d3.select(this);
+        return d.name + " - " + population_smart_print(d.value);
+      });
+
 
 
   }
+
 }

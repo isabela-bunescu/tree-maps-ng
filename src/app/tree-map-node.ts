@@ -33,9 +33,14 @@ export interface RectNode {
   transition?: Change
 }
 
+/**
+ * convert unstructured tree data from the server into typescript-friendly format (all nodes will be treated the same)
+ * @param data
+ * @returns
+ */
 export function raw_data_to_trees(data: any): [TreeMapNode[], number[]] {
   let d = data.map(
-    (el) => { return { time: el.time, ...decorate_tree(el) }; }
+    (el) => { return { time: el.time, ...decorate_tree(el) }; } //add new field (time) to object
   )
     .map(
       (el) => { return TreeConversion(el); }
@@ -49,6 +54,11 @@ export function raw_data_to_trees(data: any): [TreeMapNode[], number[]] {
 
 }
 
+/**
+ *
+ * @param tree_root
+ * @returns
+ */
 export function TreeConversion(tree_root: any): TreeMapNode {
 
   if (tree_root.hasOwnProperty("children")) {
@@ -65,7 +75,13 @@ export function TreeConversion(tree_root: any): TreeMapNode {
 
 }
 
-
+/**
+ *
+ * @param tree
+ * @param tree_ref initial tree which the topology is based on
+ * @param parent_division
+ * @returns
+ */
 export function SliceAndDiceTreeMapCont(tree: TreeMapNode, tree_ref: TreeMapNode, parent_division: any): RectNode[] {
   if (tree.leaf)
     return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (parent_division.cmin + parent_division.cmax) / 2) + 300) % 360, color_s: 50, color_l: 40, color_a: 1.0 , transition: Change.None} as RectNode]
@@ -201,9 +217,16 @@ export function get_layout_names(): any[] {
   { Name: "s&d_v", DisplayName: "Slice & dice vertical", Description: "Slice and dice algorithm starting with vertical division." }];
 }
 
+/**
+ *
+ * @param trees array of trees for different timesteps
+ * @param layout layout type
+ * @returns
+ */
 export function data_to_rectangles(trees: TreeMapNode[], layout: string): [RectNode[][], Changelog[][]] {
 
   let changelogs: any[] = [];
+
   for (let i = 0; i < trees.length - 1; i++) {
     let diff = TreeDiff_1(trees[i], trees[i + 1], [], []);
     let changelog: Changelog[] = diffs_to_changelog(diff);
@@ -257,7 +280,7 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: string): [RectN
           rectangles[i-1][k].y0 = 0;
           rectangles[i-1][k].y1 = 1;
           rectangles[i][k].transition = Change.Create;
-        
+
 
         }
         else if (filtered[0].Type == "Delete") {
@@ -281,6 +304,14 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: string): [RectN
 
 }
 
+/**
+ * finds structural differences using hash-based algorithm
+ * @param t1 treemap1
+ * @param t2 treemap2
+ * @param path explored list of nodes
+ * @param diff differences found so far
+ * @returns
+ */
 export function TreeDiff_1(t1: TreeMapNode, t2: TreeMapNode, path: string[], diff: any[]) {
 
   if (t1.leaf && t2.leaf)
@@ -289,7 +320,7 @@ export function TreeDiff_1(t1: TreeMapNode, t2: TreeMapNode, path: string[], dif
     if (!t1.children[0].leaf) {
       for (let i = 0; i < t1.children.length; i++) {
         if (t1.children[i].hash != t2.children[i].hash) {
-          let path_new = [...path];
+          let path_new = [...path]; //copy
           path_new.push(t1.children[i].name);
 
           TreeDiff_1(t1.children[i], t2.children[i], path_new, diff);
