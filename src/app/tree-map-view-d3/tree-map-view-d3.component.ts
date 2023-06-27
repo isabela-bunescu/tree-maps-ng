@@ -10,6 +10,7 @@ import {FormsModule} from '@angular/forms';
 import {MatInputModule} from '@angular/material/input';
 import {MatSelectModule} from '@angular/material/select';
 import {MatFormFieldModule} from '@angular/material/form-field';
+import { fromEvent } from 'rxjs';
 
 
 @Component({
@@ -43,6 +44,7 @@ export class TreeMapViewD3Component {
   public changelog_display: any[] = [];
   public svg_height: number = 0;
   public svg_width: number = 0;
+  public resizeSubscription: any;
 
 /**
  * change dataset. A request to the server is made
@@ -58,7 +60,7 @@ export class TreeMapViewD3Component {
         [this.data, this.timesteps] = raw_data_to_trees(data);
         console.log(this.data);
         console.log(this.Layouts);
-        [this.rectangles, this.changelog_now] = data_to_rectangles(this.data, this.Layouts[0].Name);
+        [this.rectangles, this.changelog_now] = data_to_rectangles(this.data, this.Layouts[0].Name, this.svg_width, this.svg_height);
         this.selectedLayoutIndex = 0;
         //console.log(JSON.stringify(this.data));
 
@@ -99,7 +101,7 @@ export class TreeMapViewD3Component {
 
   public update_to_new_layout(event) {
     let i: number = event;
-    [this.rectangles, this.changelog_now] = data_to_rectangles(this.data, this.Layouts[i].Name);
+    [this.rectangles, this.changelog_now] = data_to_rectangles(this.data, this.Layouts[i].Name, this.svg_width, this.svg_height);
     this.reset_view();
   }
 
@@ -170,7 +172,14 @@ export class TreeMapViewD3Component {
     this.svg_width = window.innerWidth;
     this.svg_handle = d3.select("body").select("svg g");
 
-
+    let resizeObservable = fromEvent(window, 'resize')
+    let resizeSubscription = resizeObservable.subscribe( evt => {
+      this.svg_height = Math.round(window.innerHeight*0.7);
+      this.svg_width = window.innerWidth;
+      [this.rectangles, this.changelog_now] = data_to_rectangles(this.data, this.Layouts[this.selectedLayoutIndex].Name, this.svg_width, this.svg_height);
+      if(!this.playing)
+        this.render(this.rectangles[this.index_time]);
+    })
 
     this.dfs.fetch_index().subscribe(dta => {
       this.Index = dta;
@@ -181,7 +190,7 @@ export class TreeMapViewD3Component {
           [this.data, this.timesteps] = raw_data_to_trees(data);
           console.log(this.data);
           console.log(this.Layouts);
-          [this.rectangles, this.changelog_now] = data_to_rectangles(this.data, this.Layouts[0].Name);
+          [this.rectangles, this.changelog_now] = data_to_rectangles(this.data, this.Layouts[0].Name, this.svg_width, this.svg_height);
 
           //console.log(JSON.stringify(this.data));
 
@@ -272,10 +281,10 @@ export class TreeMapViewD3Component {
             //console.log(hue_angle, sat, alpha)
             d3.select(this)
               .attr('fill', "hsla(" + hue_angle + ", " + sat + "%, " + d.end.color_l + "%, " + alpha + ")")
-              .attr("x", d.end.x0.toString() + "%")
-              .attr("y", d.end.y0.toString() + "%")
-              .attr("width", (d.end.x1-d.end.x0).toString() + "%")
-              .attr("height", (d.end.y1-d.end.y0).toString() + "%")
+              .attr("x", d.end.x0.toString() + "")
+              .attr("y", d.end.y0.toString() + "")
+              .attr("width", (d.end.x1-d.end.x0).toString() + "")
+              .attr("height", (d.end.y1-d.end.y0).toString() + "")
           }
         }
         else if (d.end.transition == Change.Move) {
@@ -289,10 +298,10 @@ export class TreeMapViewD3Component {
 
             d3.select(this)
               .attr('fill', "hsla(" + hue_angle + ", " + sat + "%, " + d.end.color_l + "%, " + d.start.color_a + ")")
-              .attr("x", x.toString() + "%")
-              .attr("y", y.toString() + "%")
-              .attr("width", w.toString() + "%")
-              .attr("height", h.toString() + "%")
+              .attr("x", x.toString() + "")
+              .attr("y", y.toString() + "")
+              .attr("width", w.toString() + "")
+              .attr("height", h.toString() + "")
           }
         } else // if (d.end.transition == Change.None)
         {
@@ -305,10 +314,10 @@ export class TreeMapViewD3Component {
 
             d3.select(this)
               .attr('fill', "hsla(" + hue_angle + ", " + d.end.color_s + "%, " + d.end.color_l + "%, " + d.start.color_a + ")")
-              .attr("x", x.toString() + "%")
-              .attr("y", y.toString() + "%")
-              .attr("width", w.toString() + "%")
-              .attr("height", h.toString() + "%")
+              .attr("x", x.toString() + "")
+              .attr("y", y.toString() + "")
+              .attr("width", w.toString() + "")
+              .attr("height", h.toString() + "")
           }
         }
 
@@ -337,13 +346,13 @@ export class TreeMapViewD3Component {
       d3.select('svg')
       .selectAll("foreignObject")
       .data(rectangles_end)
-      .attr("x", (d) => { return ((d.x0 )/100*width).toString() + ""; })
-      .attr("y", (d) => { return ((d.y0 )/100*height).toString() + ""; })
-    .attr("width",(d) =>  { return ((d.x1 - d.x0)/100*width).toString() + "";})
-    .attr("height",(d) =>  { return ((d.y1 - d.y0)/100*height).toString() + "";})
+      .attr("x", (d) => { return ((d.x0 )).toString() + ""; })
+      .attr("y", (d) => { return ((d.y0 )).toString() + ""; })
+    .attr("width",(d) =>  { return ((d.x1 - d.x0)).toString() + "";})
+    .attr("height",(d) =>  { return ((d.y1 - d.y0)).toString() + "";})
     .append("xhtml:div")
-    .style("width", (d) =>  { return ((d.x1 - d.x0)/100*width).toString() + "px";})
-    .style("height", (d) =>  { return ((d.y1 - d.y0)/100*height).toString() + "px";})
+    .style("width", (d) =>  { return ((d.x1 - d.x0)).toString() + "px";})
+    .style("height", (d) =>  { return ((d.y1 - d.y0)).toString() + "px";})
     .style("color", "#fff")
     .style("white-space", "pre-wrap")
     .style("white-space", "-moz-pre-wrap")
@@ -358,7 +367,7 @@ export class TreeMapViewD3Component {
     .style("overflow-x", "hidden")
     .style("font-size", "16px")
     .html((d) => {
-      if(Math.floor((d.y1 - d.y0)/100*height) < 16  || Math.floor((d.x1 - d.x0)/100*height) < 10)
+      if(Math.floor((d.y1 - d.y0)) < 16  || Math.floor((d.x1 - d.x0)) < 10)
         return ""
       else
         return d.name + " - " + population_smart_print(d.value);
@@ -399,7 +408,8 @@ export class TreeMapViewD3Component {
     //console.log(JSON.stringify(rectangles))
 
     let width = this.svg_width;
-      let height = this.svg_height;
+    let height = this.svg_height;
+
     this.svg_handle.selectAll("g").remove()
 
     var g = this.svg_handle.selectAll(".rect")
@@ -419,10 +429,10 @@ export class TreeMapViewD3Component {
 
     g.append("rect")
     //  .attr("id", (r) => { return "#" + r.name; })
-      .attr("width", (r: RectNode) => { return (r.x1 - r.x0).toString() + "%"; })
-      .attr("height", (r) => { return (r.y1 - r.y0).toString() + "%"; })
-      .attr("x", (r) => { return (r.x0).toString() + "%"; })
-      .attr("y", (r) => { return (r.y0).toString() + "%"; })
+      .attr("width", (r: RectNode) => { return (r.x1 - r.x0).toString() + ""; })
+      .attr("height", (r) => { return (r.y1 - r.y0).toString() + ""; })
+      .attr("x", (r) => { return (r.x0).toString() + ""; })
+      .attr("y", (r) => { return (r.y0).toString() + ""; })
       .attr("fill", (r) => { let rgb = hslToRgb(r.color_h, r.color_s, r.color_l); return "rgba(" + Math.round(rgb[0]) + ", " + Math.round(rgb[1]) + ", " + Math.round(rgb[2]) + ", 1.0)"; })
 
 
@@ -441,10 +451,10 @@ export class TreeMapViewD3Component {
 
 
       g.append("foreignObject")
-      .attr("x", (d) => { return ((d.x0 )/100*width).toString() + ""; })
-      .attr("y", (d) => { return ((d.y0 )/100*height).toString() + ""; })
-    .attr("width",(d) =>  { return ((d.x1 - d.x0)/100*width).toString() + "";})
-    .attr("height",(d) =>  { return ((d.y1 - d.y0)/100*height).toString() + "";})
+      .attr("x", (d) => { return ((d.x0 )).toString() + ""; })
+      .attr("y", (d) => { return ((d.y0 )).toString() + ""; })
+    .attr("width",(d) =>  { return ((d.x1 - d.x0)).toString() + "";})
+    .attr("height",(d) =>  { return ((d.y1 - d.y0)).toString() + "";})
     .on('mouseover', function (d, i) {
 
       tip.style("opacity", 1)
@@ -460,8 +470,8 @@ export class TreeMapViewD3Component {
     tip.style("opacity", 0)
     })
     .append("xhtml:div")
-    .style("width", (d) =>  { return ((d.x1 - d.x0)/100*width).toString() + "px";})
-    .style("height", (d) =>  { return ((d.y1 - d.y0)/100*height).toString() + "px";})
+    .style("width", (d) =>  { return ((d.x1 - d.x0)).toString() + "px";})
+    .style("height", (d) =>  { return ((d.y1 - d.y0)).toString() + "px";})
     .style("color", "#fff")
     .style("white-space", "pre-wrap")
     .style("white-space", "-moz-pre-wrap")
@@ -476,7 +486,7 @@ export class TreeMapViewD3Component {
     .style("overflow-x", "hidden")
     .style("font-size", "16px")
     .html((d) => {
-      if(Math.floor((d.y1 - d.y0)/100*height) < 16  || Math.floor((d.x1 - d.x0)/100*height) < 10)
+      if(Math.floor((d.y1 - d.y0)) < 16  || Math.floor((d.x1 - d.x0)) < 10)
         return ""
       else
         return d.name + " - " + population_smart_print(d.value);

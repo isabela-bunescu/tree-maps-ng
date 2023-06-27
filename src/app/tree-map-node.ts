@@ -281,7 +281,7 @@ export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_d
           so_far = X0;
           for(let idx of frontier){
             let c = tree.children[idx];
-console.log("Entering ", c.name, " ", X0,X1,Y0,Y1);
+
             let delta_c = (c.value / val) * (parent_division.cmax - parent_division.cmin);
             let delta = (c.value / total_value_frontier) * (X1 - X0);
             arr = arr.concat(BuildSquarify(c, tree_ref, { x0: so_far , x1: so_far+delta, y0: Y0, y1: Y0+height, cmin: cstart, cmax: cstart + delta_c}));
@@ -355,7 +355,7 @@ export function get_layout_names(): any[] {
  * @param layout layout type
  * @returns
  */
-export function data_to_rectangles(trees: TreeMapNode[], layout: string): [RectNode[][], Changelog[][]] {
+export function data_to_rectangles(trees: TreeMapNode[], layout: string, width: number, height: number): [RectNode[][], Changelog[][]] {
 
   let changelogs: any[] = [];
 
@@ -371,11 +371,11 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: string): [RectN
   // build treemap and get list of names
   for (let i = 0; i < trees.length; ++i) {
     if(layout == "sq")
-      rectangles.push(BuildSquarify(trees[i], trees[0], { x0: 0, x1: 100, y0: 0, y1: 100, cmin: 0, cmax: 1 }));
+      rectangles.push(BuildSquarify(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, cmin: 0, cmax: 1 }));
     if (layout == "s&d_h")
-      rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: 100, y0: 0, y1: 100, slice: 1, cmin: 0, cmax: 1 }));
+      rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, slice: 1, cmin: 0, cmax: 1 }));
     if (layout == "s&d_v")
-      rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: 100, y0: 0, y1: 100, slice: 0, cmin: 0, cmax: 1 }));
+      rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, slice: 0, cmin: 0, cmax: 1 }));
     //rectangles.push(BuildTreeMap(trees[i], "", { x0: 0, x1: 100, y0: 0, y1: 100, slice: 0 }));
     rectangles[i].map(el => { unique_names.add(el.name); });
   }
