@@ -14,6 +14,9 @@ import { HomeViewComponent } from './home-view/home-view.component';
 import { AlertModule } from '@coreui/angular';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Text } from '@visx/text';
+import {MatInputModule} from '@angular/material/input';
+import {MatSelectModule} from '@angular/material/select';
+import {MatFormFieldModule} from '@angular/material/form-field';
 
 @NgModule({
   declarations: [
@@ -32,6 +35,9 @@ import { Text } from '@visx/text';
     FormsModule,
     AlertModule,
     BrowserAnimationsModule,
+    MatInputModule,
+    MatSelectModule,
+    MatFormFieldModule
   ],
   providers: [],
   bootstrap: [AppComponent]

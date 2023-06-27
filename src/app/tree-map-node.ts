@@ -1,6 +1,7 @@
 import { TreemapLayout, partition } from "d3";
 import { Changelog, Diff, decorate_tree, diffs_to_changelog } from './extras';
 import { order } from "@amcharts/amcharts4/.internal/core/utils/Number";
+import { TreeMap } from "@amcharts/amcharts4/charts";
 
 export enum Change{
   None = 0,
@@ -176,6 +177,136 @@ export function SliceAndDiceTreeMap(tree: TreeMapNode, parent_division: any): Re
 
 }
 
+export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_division: any): RectNode[] {
+  if (tree.leaf)
+   return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 50, color_a: 1.0, transition: Change.None } as RectNode]
+  else {
+    console.log(tree.name, parent_division.x0, parent_division.x1, parent_division.y0, parent_division.y1)
+    let arr: RectNode[] = [];
+
+    let slice_dimension = 0;
+    if(parent_division.y1-parent_division.y0 > parent_division.x1 - parent_division.x0)
+      slice_dimension = 1;
+
+    let val = tree.children.reduce((pv, ch) => { return pv + ch.value; }, 0);
+    let so_far = 0;
+    let ratio = (x) => {return x > 1 ? x : 1/x; }
+
+    let idx = tree.children.map((el, id) => { return { v: el.value, id: id } }).sort((b, a) => { return a.v - b.v; });
+    //let explored: number[] = [];
+    let frontier: number[] = [];
+    let to_explore: number[] = idx.map((el)=>{return el.id;});
+    let X0 = parent_division.x0;
+    let X1 = parent_division.x1;
+    let Y0 = parent_division.y0;
+    let Y1 = parent_division.y1;
+
+    let previous_ratio = Infinity;
+    let total_ratio = 0;
+    let cstart = parent_division.cmin;
+    let value_so_far: number = 0;
+
+    while(to_explore.length > 0){
+
+      // try add on a horizontal group
+      if(slice_dimension == 0){
+        frontier.push(to_explore[0]);
+        to_explore.shift();
+        let total_value_frontier = frontier.reduce((pv, el) => {return pv+tree.children[el].value;}, 0);
+        let width = total_value_frontier/(val-value_so_far)*(X1-X0);
+        let mean_ratio = frontier.reduce((pv, el) => { return pv+ratio((tree.children[el].value/total_value_frontier)*(Y1-Y0)/width); }, 0)
+        mean_ratio /= frontier.length;
+        //console.log(mean_ratio, previous_ratio, mean_ratio <= previous_ratio)
+        if(mean_ratio <= previous_ratio && to_explore.length > 0)
+          previous_ratio = mean_ratio;
+        else
+        {
+
+          if(previous_ratio < mean_ratio)
+          {
+            let tmp = frontier.pop();
+            to_explore.unshift(tmp as number);
+          }
+
+          // compute new available space
+          let total_value_frontier = frontier.reduce((pv, el) => { return pv+tree.children[el].value; }, 0);
+          let width = total_value_frontier/(val-value_so_far)*(X1-X0);
+
+
+          so_far = Y0;
+          for(let idx of frontier){
+            let c = tree.children[idx];
+
+            let delta_c = (c.value / val) * (parent_division.cmax - parent_division.cmin);
+            let delta = (c.value / total_value_frontier) * (Y1 - Y0);
+            console.log("Entering ", c.name, " ", X0,X1,Y0,Y1);
+            arr = arr.concat(BuildSquarify(c, tree_ref, { x0: X0 , x1: X0+width, y0: so_far, y1: so_far+delta, cmin: cstart, cmax: cstart + delta_c }));
+            cstart += delta_c;
+            so_far += delta;
+          }
+          X0 += width;
+          value_so_far += total_value_frontier;
+
+          // decide where to slice next
+          slice_dimension = 1;
+          if(Y1-Y0 < X1 - X0)
+            slice_dimension = 0;
+          previous_ratio = Infinity;
+          frontier = [];
+        }
+      }
+      else{
+        // slicing the other way
+        frontier.push(to_explore[0]);
+        to_explore.shift();
+        let total_value_frontier = frontier.reduce((pv, el) => {return pv+tree.children[el].value;}, 0);
+        let height = total_value_frontier/(val-value_so_far)*(Y1-Y0);
+        let mean_ratio = frontier.reduce((pv, el) => { return pv+ratio((tree.children[el].value/total_value_frontier)*(X1-X0)/height); }, 0)
+        mean_ratio /= frontier.length;
+
+        if(mean_ratio <= previous_ratio && to_explore.length > 0)
+          previous_ratio = mean_ratio;
+        else
+        {
+          if(previous_ratio < mean_ratio)
+          {
+            let tmp = frontier.pop();
+            to_explore.unshift(tmp as number);
+          }
+
+          // compute new available space
+          let total_value_frontier = frontier.reduce((pv, el) => { return pv+tree.children[el].value; }, 0);
+          let height = total_value_frontier/(val-value_so_far)*(Y1-Y0);
+
+          so_far = X0;
+          for(let idx of frontier){
+            let c = tree.children[idx];
+console.log("Entering ", c.name, " ", X0,X1,Y0,Y1);
+            let delta_c = (c.value / val) * (parent_division.cmax - parent_division.cmin);
+            let delta = (c.value / total_value_frontier) * (X1 - X0);
+            arr = arr.concat(BuildSquarify(c, tree_ref, { x0: so_far , x1: so_far+delta, y0: Y0, y1: Y0+height, cmin: cstart, cmax: cstart + delta_c}));
+            cstart += delta_c;
+            so_far += delta;
+          }
+          Y0 += height;
+          value_so_far += total_value_frontier;
+
+          // decide where to slice next
+          slice_dimension = 0;
+          if(Y1-Y0 > X1 - X0)
+            slice_dimension = 1;
+          previous_ratio = Infinity;
+          frontier = [];
+        }
+      }
+
+    }
+
+
+    return arr;
+  }
+}
+
 export function BuildTreeMap(tree: TreeMapNode, type: string, parent_division: any): RectNode[] {
   if (tree.leaf)
     return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 50, color_a: 1.0, transition: Change.None } as RectNode]
@@ -202,7 +333,7 @@ export function BuildTreeMap(tree: TreeMapNode, type: string, parent_division: a
       let delta = (c.value / val) * (end - start);
       if (parent_division.slice == 0)
         arr = arr.concat(BuildTreeMap(c, type, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice }))
-      arr = arr.concat(BuildTreeMap(c, type, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice }))
+      //arr = arr.concat(BuildTreeMap(c, type, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice }))
 
       if (parent_division.slice == 1)
         arr = arr.concat(BuildTreeMap(c, type, { x0: parent_division.x0, x1: parent_division.x1, y0: start + so_far, y1: start + so_far + delta, slice: new_slice }))
@@ -214,7 +345,8 @@ export function BuildTreeMap(tree: TreeMapNode, type: string, parent_division: a
 
 export function get_layout_names(): any[] {
   return [{ Name: "s&d_h", DisplayName: "Slice & dice horizontal", Description: "Slice and dice algorithm starting with horizontal division." },
-  { Name: "s&d_v", DisplayName: "Slice & dice vertical", Description: "Slice and dice algorithm starting with vertical division." }];
+  { Name: "s&d_v", DisplayName: "Slice & dice vertical", Description: "Slice and dice algorithm starting with vertical division." },
+  { Name: "sq", DisplayName: "Squarify", Description: "Greedy sqarify algorithm ." }];
 }
 
 /**
@@ -238,7 +370,8 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: string): [RectN
 
   // build treemap and get list of names
   for (let i = 0; i < trees.length; ++i) {
-
+    if(layout == "sq")
+      rectangles.push(BuildSquarify(trees[i], trees[0], { x0: 0, x1: 100, y0: 0, y1: 100, cmin: 0, cmax: 1 }));
     if (layout == "s&d_h")
       rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: 100, y0: 0, y1: 100, slice: 1, cmin: 0, cmax: 1 }));
     if (layout == "s&d_v")

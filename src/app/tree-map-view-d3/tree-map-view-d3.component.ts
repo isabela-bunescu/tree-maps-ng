@@ -6,6 +6,11 @@ import { Changelog, hslToRgb, population_smart_print } from '../extras';
 import { Change, RectNode, TreeMapNode, data_to_rectangles, get_layout_names, raw_data_to_trees } from '../tree-map-node';
 import { BuildTreeMap } from '../tree-map-node';
 import { Text } from '@visx/text';
+import {FormsModule} from '@angular/forms';
+import {MatInputModule} from '@angular/material/input';
+import {MatSelectModule} from '@angular/material/select';
+import {MatFormFieldModule} from '@angular/material/form-field';
+
 
 @Component({
   selector: 'app-tree-map-view-d3',
@@ -36,6 +41,8 @@ export class TreeMapViewD3Component {
   public animation_duration: number = 1000;
   public animation_duration_change: number = 1000;
   public changelog_display: any[] = [];
+  public svg_height: number = 0;
+  public svg_width: number = 0;
 
 /**
  * change dataset. A request to the server is made
@@ -159,7 +166,8 @@ export class TreeMapViewD3Component {
 
   ngOnInit() {
 
-
+    this.svg_height = Math.round(window.innerHeight*0.7);
+    this.svg_width = window.innerWidth;
     this.svg_handle = d3.select("body").select("svg g");
 
 
@@ -314,7 +322,7 @@ export class TreeMapViewD3Component {
         }*/
       });
 
-    d3.select('svg')
+    /*d3.select('svg')
       .selectAll('text')
       .data(rectangles_start)
       .attr("class", "dotme")
@@ -322,7 +330,39 @@ export class TreeMapViewD3Component {
       .attr("y", (d) => { return (d.y0 / 2 + d.y1 / 2).toString() + "%"; })
       .attr("width", (d) => { return (d.x1-d.x0).toString()+"%"; } )
       .text(function (d) { return d.name + " - " + population_smart_print(d.value); });
+*/
+      let width = this.svg_width;
+      let height = this.svg_height;
 
+      d3.select('svg')
+      .selectAll("foreignObject")
+      .data(rectangles_end)
+      .attr("x", (d) => { return ((d.x0 )/100*width).toString() + ""; })
+      .attr("y", (d) => { return ((d.y0 )/100*height).toString() + ""; })
+    .attr("width",(d) =>  { return ((d.x1 - d.x0)/100*width).toString() + "";})
+    .attr("height",(d) =>  { return ((d.y1 - d.y0)/100*height).toString() + "";})
+    .append("xhtml:div")
+    .style("width", (d) =>  { return ((d.x1 - d.x0)/100*width).toString() + "px";})
+    .style("height", (d) =>  { return ((d.y1 - d.y0)/100*height).toString() + "px";})
+    .style("color", "#fff")
+    .style("white-space", "pre-wrap")
+    .style("white-space", "-moz-pre-wrap")
+    .style("white-space", "-pre-wrap")
+    .style(" white-space", "-o-pre-wrap")
+    .style("word-wrap", "normal")
+    .style("text-align", "center")
+    .style("display", "flex")
+    .style("justify-content", "center")
+    .style("align-items", "center")
+    .style("overflow-y", "hidden")
+    .style("overflow-x", "hidden")
+    .style("font-size", "16px")
+    .html((d) => {
+      if(Math.floor((d.y1 - d.y0)/100*height) < 16  || Math.floor((d.x1 - d.x0)/100*height) < 10)
+        return ""
+      else
+        return d.name + " - " + population_smart_print(d.value);
+    });
   }
  /* public dottext(text: any){
 
@@ -353,94 +393,41 @@ export class TreeMapViewD3Component {
 
 
 
-  public animate(rectangles_start: RectNode[], rectangles_end: RectNode[]) {
-
-    //this.svg_handle.selectAll(".rect").remove()
 
 
-
-    var g = this.svg_handle.selectAll(".rect")
-      .data(rectangles_end)
-      .enter()
-      .append("g")
-      .classed('rect', true)
-
-
-    d3.select('svg')
-      .selectAll('rect')
-      .data(rectangles_end)
-      .transition()
-      .attr("id", (r) => { return "#" + r.name; })
-      .attr("width", (r: RectNode) => { return (r.x1 - r.x0).toString() + "%"; })
-      .attr("height", (r) => { return (r.y1 - r.y0).toString() + "%"; })
-      .attr("x", (r) => { return (r.x0).toString() + "%"; })
-      .attr("y", (r) => { return (r.y0).toString() + "%"; })
-      .attr("fill", (r) => { let rgb = hslToRgb(r.color_h, r.color_s, r.color_l); return "rgba(" + Math.round(rgb[0]) + ", " + Math.round(rgb[1]) + ", " + Math.round(rgb[2]) + ", 1.0)"; })
-      .duration(this.animation_duration);
-
-    d3.select('svg')
-      .selectAll('text')
-      .data(rectangles_start)
-      .attr("x", (d) => { return (d.x0 / 2 + d.x1 / 2).toString() + "%"; })
-      .attr("y", (d) => { return (d.y0 / 2 + d.y1 / 2).toString() + "%"; })
-      //.attr("textLength", (d) => { return (d.x1-d.x0).toString()+"%"; } )
-      .attr("dy", ".35em")
-      .text(function (d) { return d.name + " - " + population_smart_print(d.value); });
-
-    // .attr("width", "400")
-    //                       .transition()
-    //.duration(2000)
-    //.attr("width", "400")
-
-
-  }
   public render(rectangles: RectNode[]) {
     //console.log(JSON.stringify(rectangles))
 
-
-    this.svg_handle.selectAll(".rect").remove()
+    let width = this.svg_width;
+      let height = this.svg_height;
+    this.svg_handle.selectAll("g").remove()
 
     var g = this.svg_handle.selectAll(".rect")
       .data(rectangles)
       .enter()
       .append("g")
-      .classed('rect', true)
+      //.classed('rect', true)
 
-    let tooltip = g.select('svg')
-      .append('div')
-      //.style("opacity", 1)
-      // .attr("class", "tooltip")
-      .style("background-color", "white")
-      .style("border", "solid")
-      .style("border-width", "2px")
-      .style("border-radius", "5px")
-      .style("padding", "5px")
+    d3.select("body").selectAll("#tt").remove();
 
+    let tip = d3.select("body").append("div")
+    .attr("id","tt")
+    .style("position", "absolute")
+    .style("background-color", "white")
+    .style("color", "black")
+    .style("opacity", 0)
 
     g.append("rect")
-      .attr("id", (r) => { return "#" + r.name; })
+    //  .attr("id", (r) => { return "#" + r.name; })
       .attr("width", (r: RectNode) => { return (r.x1 - r.x0).toString() + "%"; })
       .attr("height", (r) => { return (r.y1 - r.y0).toString() + "%"; })
       .attr("x", (r) => { return (r.x0).toString() + "%"; })
       .attr("y", (r) => { return (r.y0).toString() + "%"; })
       .attr("fill", (r) => { let rgb = hslToRgb(r.color_h, r.color_s, r.color_l); return "rgba(" + Math.round(rgb[0]) + ", " + Math.round(rgb[1]) + ", " + Math.round(rgb[2]) + ", 1.0)"; })
-      .on("mouseover", function (d) {
 
-        var xPosition = 50;
-        var yPosition = 50;
-        d3.select("#tooltip")
-          .style("left", xPosition + "%")
-          .style("top", yPosition + "%")
-          .select("#value")
-          .text(d.name);
-        d3.select("#tooltip").classed("hidden", false);
-      })
-      .on("mouseout", function () {
-        d3.select("#tooltip").classed("hidden", true);
-      })
 
-    g.append("text")
-      //.attr("text-anchor", "middle")
+ /*   g.append("text")
+      .attr("text-anchor", "middle")
       .attr("fill", "white")
       .attr("x", (d) => { return (d.x0 / 2 + d.x1 / 2).toString() + "%"; })
       .attr("y", (d) => { return (d.y0 / 2 + d.y1 / 2).toString() + "%"; })
@@ -449,8 +436,51 @@ export class TreeMapViewD3Component {
       .text((d) => {
         //let text = d3.select(this);
         return d.name + " - " + population_smart_print(d.value);
-      });
+      });*/
 
+
+
+      g.append("foreignObject")
+      .attr("x", (d) => { return ((d.x0 )/100*width).toString() + ""; })
+      .attr("y", (d) => { return ((d.y0 )/100*height).toString() + ""; })
+    .attr("width",(d) =>  { return ((d.x1 - d.x0)/100*width).toString() + "";})
+    .attr("height",(d) =>  { return ((d.y1 - d.y0)/100*height).toString() + "";})
+    .on('mouseover', function (d, i) {
+
+      tip.style("opacity", 1)
+     .html(i.name + " - " + population_smart_print(i.value))
+     .style("left", (d.clientX-25).toString() + "px")
+     .style("top", (d.clientY-75).toString() + "px")
+
+
+      //Makes the new div appear on hover
+   })
+   .on('mouseout', function (d, i) {
+
+    tip.style("opacity", 0)
+    })
+    .append("xhtml:div")
+    .style("width", (d) =>  { return ((d.x1 - d.x0)/100*width).toString() + "px";})
+    .style("height", (d) =>  { return ((d.y1 - d.y0)/100*height).toString() + "px";})
+    .style("color", "#fff")
+    .style("white-space", "pre-wrap")
+    .style("white-space", "-moz-pre-wrap")
+    .style("white-space", "-pre-wrap")
+    .style(" white-space", "-o-pre-wrap")
+    .style("word-wrap", "normal")
+    .style("text-align", "center")
+    .style("display", "flex")
+    .style("justify-content", "center")
+    .style("align-items", "center")
+    .style("overflow-y", "hidden")
+    .style("overflow-x", "hidden")
+    .style("font-size", "16px")
+    .html((d) => {
+      if(Math.floor((d.y1 - d.y0)/100*height) < 16  || Math.floor((d.x1 - d.x0)/100*height) < 10)
+        return ""
+      else
+        return d.name + " - " + population_smart_print(d.value);
+    });
 
 
   }

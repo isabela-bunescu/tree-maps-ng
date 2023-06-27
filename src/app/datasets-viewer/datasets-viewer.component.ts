@@ -52,6 +52,6 @@ export class DatasetsViewerComponent {
   }
 
   downloadFile(name: string) {
-
+    window.open(this.dfs.base_url+'data/json/'+name, "_blank");
   }
 }

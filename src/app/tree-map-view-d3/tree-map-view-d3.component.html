@@ -1,93 +1,36 @@
-<div>
-  <p></p>
-  <label for="treemap-datasets">Choose a dataset: </label>
-  <select id="treemap-datasets" [(ngModel)]="selectedIndex" (ngModelChange)="update_to_new_chart($event)">
-    <option *ngFor="let c of Index;let i = index" [value]="i"> {{c.display_name}} </option>
-  </select>
-  <p> </p>
-  <label for="treemap-layouts">Choose a layout: </label>
-  <select *ngIf="isLoaded" id="treemap-layouts" [(ngModel)]="selectedLayoutIndex"
-    (ngModelChange)="update_to_new_layout($event)">
-    <option *ngFor="let c of Layouts;let i = index" [value]="i"> {{c.DisplayName}} </option>
-  </select>
+<div class="d-flex flex-row justify-content-right">
+  <div class="p-3">
 
+    <label for="treemap-datasets"><b>Choose a dataset:</b> </label>
+    <select  class="form-control" id="treemap-datasets" [(ngModel)]="selectedIndex" (ngModelChange)="update_to_new_chart($event)">
+      <option *ngFor="let c of Index;let i = index" [value]="i"> {{c.display_name}} </option>
+    </select>
+</div>
+<div class="p-3">
+    <label *ngIf="isLoaded" for="treemap-layouts"><b>Choose a layout:</b> </label>
+    <select *ngIf="isLoaded" class="form-control" id="treemap-layouts" [(ngModel)]="selectedLayoutIndex"
+      (ngModelChange)="update_to_new_layout($event)">
+      <option *ngFor="let c of Layouts;let i = index" [value]="i"> {{c.DisplayName}} </option>
+    </select>
+  </div>
+  <div class="p-3">
+  <label *ngIf="isLoaded" for="treemap-description"><b> Dataset description: </b> </label>
+  <div id="treemap-description" class="card card-body" *ngIf="isLoaded">
+    {{Index[selectedIndex].description}}
+  </div>
+  </div>
 </div>
 
 
 
 
 <div>
-  <div *ngIf="isLoaded" [innerHTML]=""> <b>Dataset description:</b> {{Index[selectedIndex].description}}</div>
+
   <div width="100vw" height="50vh">
-    <script>
-      function wrap(text) {
-        text.each(function() {
-            var text = d3.select(this);
-            var words = text.text().split(/\s+/).reverse();
-            var lineHeight = 20;
-            var width = parseFloat(text.attr('width'));
-            var y = parseFloat(text.attr('y'));
-            var x = text.attr('x');
-            var anchor = text.attr('text-anchor');
 
-            var tspan = text.text(null).append('tspan').attr('x', x).attr('y', y).attr('text-anchor', anchor);
-            var lineNumber = 0;
-            var line = [];
-            var word = words.pop();
-
-            while (word) {
-                line.push(word);
-                tspan.text(line.join(' '));
-                if (tspan.node().getComputedTextLength() > width) {
-                    lineNumber += 1;
-                    line.pop();
-                    tspan.text(line.join(' '));
-                    line = [word];
-                    tspan = text.append('tspan').attr('x', x).attr('y', y + lineNumber * lineHeight).attr('anchor', anchor).text(word);
-                }
-                word = words.pop();
-            }
-        });
-    }
-
-    function dotme(text) {
-      alert("PL")
-        text.each(function() {
-
-            var text = d3.select(this);
-            var words = text.text().split(/\s+/);
-
-            var ellipsis = text.text('').append('tspan').attr('class', 'elip').text('...');
-            var width = parseFloat(text.attr('width')) - ellipsis.node().getComputedTextLength();
-            var numWords = words.length;
-
-            var tspan = text.insert('tspan', ':first-child').text(words.join(' '));
-
-            // Try the whole line
-            // While it's too long, and we have words left, keep removing words
-
-            while (tspan.node().getComputedTextLength() > width && words.length) {
-                words.pop();
-                tspan.text(words.join(' '));
-            }
-
-            if (words.length === numWords) {
-                ellipsis.remove();
-            }
-        });
-    }
-
-    d3.select('g').selectAll('.wrapme').call(wrap);
-    d3.select('g').selectAll('.dotme').call(dotme);
-  </script>
-    <svg id="window" width="100vw" height="50vh">
+    <svg id="window" [attr.width]="svg_width" [attr.height]="svg_height">
       <g></g>
-      <foreignObject>
-        <div id="tooltip" class="">
-          <p><strong>Name</strong></p>
-          <p><span id="value"></span></p>
-        </div>
-      </foreignObject>
+
     </svg>
 
   </div>
@@ -99,10 +42,11 @@
   </div>
 
   <div *ngIf="isLoaded" class="justify-content-center" style="display: flex; align-content: center;">
-    <div  class="d-flex flex-column justify-content-center">
+    <div class="d-flex flex-column justify-content-center">
       <label for="customRange3" class="form-label" style="position: absolute;">Year: {{timesteps[index_time]}}</label>
-      <input type="range" class="form-range" style="padding-left: 100px; width: 50vw; padding-right: 50px;" [min]="0" [max]="timesteps.length-1" [step]="1" [value]="index_time"
-        id="customRange3" oninput="" (input)="update_index_time($event);">
+      <input type="range" class="form-range" style="padding-left: 100px; width: 50vw; padding-right: 50px;" [min]="0"
+        [max]="timesteps.length-1" [step]="1" [value]="index_time" id="customRange3" oninput=""
+        (input)="update_index_time($event);">
     </div>
     <div class="d-flex flex-row justify-content-right">
       <div class="p-3">
@@ -114,9 +58,13 @@
       <div class="p-3">
         <button (click)="reset_view()" type="button" class="btn btn-primary">Reset</button>
       </div>
-      <div class="form-outline">
-        <input min="500" max="9000" step="500" type="number" id="typeNumber" [readOnly]="this.playing" class="form-control" [(ngModel)]="this.animation_duration" />
-        <label class="form-label" for="typeNumber">Duration of transition (ms)</label>
+
+      <div>
+        <label for="typeNumber">Duration of transition (ms)</label>
+        <input min="500" max="9000" step="500" type="number" id="typeNumber" [readOnly]="this.playing"
+          class="form-control" [(ngModel)]="this.animation_duration" />
+
+
       </div>
     </div>
   </div>
@@ -124,7 +72,7 @@
 
 
 
-    <div class="d-flex flex-column justify-content-center" *ngFor="let element of changelog_display">
-      <c-alert style="height: 15px;" [color]="element.color" dismissible="false">{{element.message}}</c-alert>
-    </div>
+  <div class="d-flex flex-column justify-content-center" *ngFor="let element of changelog_display">
+    <c-alert style="height: 15px;" [color]="element.color" dismissible="false">{{element.message}}</c-alert>
+  </div>
 </div>
