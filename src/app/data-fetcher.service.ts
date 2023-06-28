@@ -14,7 +14,7 @@ import { rectangle } from '@amcharts/amcharts4/.internal/core/rendering/Path';
 
 export class DataFetcherService {
   // backend address
-  base_url: string = 'http://localhost:5000/';
+  base_url: string = 'http://10.0.1.141:5000/';
   public data : any;
   public timesteps = [0,0];
   public callbackResponse = new Subject();

@@ -10,7 +10,7 @@ const routes: Routes = [
   {path: 'tree-map-view-amcharts', component: TreeMapViewAmchartsComponent},
   {path: 'tree-map-view-d3', component: TreeMapViewD3Component},
   {path: 'datasets-viewer', component: DatasetsViewerComponent},
-  {path: 'home-view', component: HomeViewComponent}
+  {path: '', component: HomeViewComponent}
 ];
 
 @NgModule({

@@ -181,7 +181,7 @@ export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_d
   if (tree.leaf)
    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 50, color_a: 1.0, transition: Change.None } as RectNode]
   else {
-    console.log(tree.name, parent_division.x0, parent_division.x1, parent_division.y0, parent_division.y1)
+
     let arr: RectNode[] = [];
 
     let slice_dimension = 0;
@@ -239,7 +239,7 @@ export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_d
 
             let delta_c = (c.value / val) * (parent_division.cmax - parent_division.cmin);
             let delta = (c.value / total_value_frontier) * (Y1 - Y0);
-            console.log("Entering ", c.name, " ", X0,X1,Y0,Y1);
+
             arr = arr.concat(BuildSquarify(c, tree_ref, { x0: X0 , x1: X0+width, y0: so_far, y1: so_far+delta, cmin: cstart, cmax: cstart + delta_c }));
             cstart += delta_c;
             so_far += delta;

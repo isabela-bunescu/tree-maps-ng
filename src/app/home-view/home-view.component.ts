@@ -6,5 +6,11 @@ import { Component } from '@angular/core';
   styleUrls: ['./home-view.component.css']
 })
 export class HomeViewComponent {
+  ngOnInit() {
+    document.body.className = "selector";
+  }
 
+ngOnDestroy(){
+    document.body.className="";
+  }
 }

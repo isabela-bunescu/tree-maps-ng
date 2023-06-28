@@ -2,11 +2,12 @@
   <div class="p-3">
 
     <label for="treemap-datasets"><b>Choose a dataset:</b> </label>
-    <select  class="form-control" id="treemap-datasets" [(ngModel)]="selectedIndex" (ngModelChange)="update_to_new_chart($event)">
+    <select class="form-control" id="treemap-datasets" [(ngModel)]="selectedIndex"
+      (ngModelChange)="update_to_new_chart($event)">
       <option *ngFor="let c of Index;let i = index" [value]="i"> {{c.display_name}} </option>
     </select>
-</div>
-<div class="p-3">
+  </div>
+  <div class="p-3">
     <label *ngIf="isLoaded" for="treemap-layouts"><b>Choose a layout:</b> </label>
     <select *ngIf="isLoaded" class="form-control" id="treemap-layouts" [(ngModel)]="selectedLayoutIndex"
       (ngModelChange)="update_to_new_layout($event)">
@@ -14,15 +15,12 @@
     </select>
   </div>
   <div class="p-3">
-  <label *ngIf="isLoaded" for="treemap-description"><b> Dataset description: </b> </label>
-  <div id="treemap-description" class="card card-body" *ngIf="isLoaded">
-    {{Index[selectedIndex].description}}
-  </div>
+    <label *ngIf="isLoaded" for="treemap-description"><b> Dataset description: </b> </label>
+    <div id="treemap-description" class="card card-body" *ngIf="isLoaded">
+      {{Index[selectedIndex].description}}
+    </div>
   </div>
 </div>
-
-
-
 
 <div>
 
