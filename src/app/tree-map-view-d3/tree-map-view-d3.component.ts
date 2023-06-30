@@ -489,7 +489,7 @@ export class TreeMapViewD3Component {
       if(Math.floor((d.y1 - d.y0)) < 16  || Math.floor((d.x1 - d.x0)) < 10)
         return ""
       else
-        return ""// d.name + " - " + population_smart_print(d.value);
+        return d.name + " - " + population_smart_print(d.value);
     });
 
 

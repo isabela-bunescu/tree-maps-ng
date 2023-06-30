@@ -143,7 +143,7 @@ export function SliceAndDiceTreeMapCont(tree: TreeMapNode, tree_ref: TreeMapNode
 
 export function SliceAndDiceTreeMap(tree: TreeMapNode, parent_division: any): RectNode[] {
   if (tree.leaf)
-    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 50, color_a: 1.0, transition: Change.None} as RectNode]
+    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 40, color_a: 1.0, transition: Change.None} as RectNode]
   else {
     let start, end, new_slice;
     if (parent_division.slice == 0) {
@@ -179,7 +179,7 @@ export function SliceAndDiceTreeMap(tree: TreeMapNode, parent_division: any): Re
 
 export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_division: any): RectNode[] {
   if (tree.leaf)
-   return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 50, color_a: 1.0, transition: Change.None } as RectNode]
+   return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 40, color_a: 1.0, transition: Change.None } as RectNode]
   else {
 
     let arr: RectNode[] = [];
@@ -193,18 +193,26 @@ export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_d
     let ratio = (x) => {return x > 1 ? x : 1/x; }
 
     let idx = tree.children.map((el, id) => { return { v: el.value, id: id } }).sort((b, a) => { return a.v - b.v; });
+
     //let explored: number[] = [];
     let frontier: number[] = [];
     let to_explore: number[] = idx.map((el)=>{return el.id;});
+
     let X0 = parent_division.x0;
     let X1 = parent_division.x1;
     let Y0 = parent_division.y0;
     let Y1 = parent_division.y1;
+    let X0r = parent_division.x0r;
+    let X1r = parent_division.x1r;
+    let Y0r = parent_division.y0r;
+    let Y1r = parent_division.y1r;
 
     let previous_ratio = Infinity;
     let total_ratio = 0;
     let cstart = parent_division.cmin;
+
     let value_so_far: number = 0;
+    let value_so_far_reference: number = 0;
 
     while(to_explore.length > 0){
 
@@ -240,7 +248,7 @@ export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_d
             let delta_c = (c.value / val) * (parent_division.cmax - parent_division.cmin);
             let delta = (c.value / total_value_frontier) * (Y1 - Y0);
 
-            arr = arr.concat(BuildSquarify(c, tree_ref, { x0: X0 , x1: X0+width, y0: so_far, y1: so_far+delta, cmin: cstart, cmax: cstart + delta_c }));
+            arr = arr.concat(BuildSquarify(c, tree_ref, { x0: X0 , x1: X0+width, y0: so_far, y1: so_far+delta, x0r: X0r, x1r: X1r, y0r: Y0r, y1r: Y1r, cmin: cstart, cmax: cstart + delta_c }));
             cstart += delta_c;
             so_far += delta;
           }
@@ -284,7 +292,7 @@ export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_d
 
             let delta_c = (c.value / val) * (parent_division.cmax - parent_division.cmin);
             let delta = (c.value / total_value_frontier) * (X1 - X0);
-            arr = arr.concat(BuildSquarify(c, tree_ref, { x0: so_far , x1: so_far+delta, y0: Y0, y1: Y0+height, cmin: cstart, cmax: cstart + delta_c}));
+            arr = arr.concat(BuildSquarify(c, tree_ref, { x0: so_far , x1: so_far+delta, y0: Y0, y1: Y0+height, x0r: X0r, x1r: X1r, y0r: Y0r, y1r: Y1r, cmin: cstart, cmax: cstart + delta_c}));
             cstart += delta_c;
             so_far += delta;
           }
@@ -371,7 +379,7 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: string, width: 
   // build treemap and get list of names
   for (let i = 0; i < trees.length; ++i) {
     if(layout == "sq")
-      rectangles.push(BuildSquarify(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, cmin: 0, cmax: 1 }));
+      rectangles.push(BuildSquarify(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, x0r: 0, x1r: width, y0r: 0, y1r: height, cmin: 0, cmax: 1 }));
     if (layout == "s&d_h")
       rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, slice: 1, cmin: 0, cmax: 1 }));
     if (layout == "s&d_v")
