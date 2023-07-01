@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { IndexEntry } from '../index-entry';
 import { DataFetcherService } from '../data-fetcher.service';
+import { Router } from '@angular/router';
 
 
 
@@ -18,7 +19,7 @@ export class DatasetsViewerComponent {
   public displayStatus: boolean = false;
   public displayError: boolean = false;
 
-  constructor(private dfs: DataFetcherService){
+  constructor(private dfs: DataFetcherService, private router: Router){
 
   }
 
@@ -53,5 +54,9 @@ export class DatasetsViewerComponent {
 
   downloadFile(name: string) {
     window.open(this.dfs.base_url+'data/json/'+name, "_blank");
+  }
+  editEntry(name: string){
+    let id = name;
+    this.router.navigate(["edit-treemap", id]);
   }
 }

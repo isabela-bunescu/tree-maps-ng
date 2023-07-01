@@ -16,7 +16,7 @@
   </div>
   <div class="p-3">
     <label *ngIf="isLoaded" for="treemap-description"><b> Dataset description: </b> </label>
-    <div id="treemap-description" class="card card-body" *ngIf="isLoaded">
+    <div id="treemap-description" class="card" style="height: 40px" *ngIf="isLoaded">
       {{Index[selectedIndex].description}}
     </div>
   </div>

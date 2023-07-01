@@ -17,6 +17,7 @@ import { Text } from '@visx/text';
 import {MatInputModule} from '@angular/material/input';
 import {MatSelectModule} from '@angular/material/select';
 import {MatFormFieldModule} from '@angular/material/form-field';
+import { EditComponent } from './edit/edit.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import {MatFormFieldModule} from '@angular/material/form-field';
     TreeMapViewAmchartsComponent,
     TreeMapViewD3Component,
     DatasetsViewerComponent,
-    HomeViewComponent
+    HomeViewComponent,
+    EditComponent
   ],
   imports: [
     BrowserModule,
