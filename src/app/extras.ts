@@ -114,7 +114,7 @@ export function hslToRgb(h: number, s: number, l: number): [number, number, numb
   return [red, green, blue];
 }
 
-export function population_smart_print(n: number){
+export function value_smart_print(n: number){
 
   if(n < 900)
   {

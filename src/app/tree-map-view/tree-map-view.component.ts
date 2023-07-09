@@ -4,7 +4,7 @@ import { AgChartsAngular } from 'ag-charts-angular';
 import { getData } from './data';
 import { HttpClient } from '@angular/common/http';
 import { DataFetcherService } from '../data-fetcher.service';
-import { diffs_to_changelog, hslToRgb, population_smart_print, tree_diff_v1, Changelog } from '../extras';
+import { diffs_to_changelog, hslToRgb, value_smart_print, tree_diff_v1, Changelog } from '../extras';
 import { IndexEntry } from '../index-entry';
 
 @Component({
@@ -69,7 +69,7 @@ export class TreeMapViewComponent {
               formatter: (params) => {
                 //let val = Math.round(params.datum.value/1000000);
 
-                return population_smart_print(params.datum.value);
+                return value_smart_print(params.datum.value);
               },
             },
           },
@@ -101,7 +101,7 @@ export class TreeMapViewComponent {
 
             var fill = 'rgb( ' + rgb[0] + ', ' + rgb[1] + ', ' + rgb[2] + ')'
             const stroke = 'white';
-            
+
             let ret = {fill: fill, fillOpacity: fill, stroke: stroke, gradient: false} as AgTreemapSeriesOptions;
             return ret;
           },
@@ -124,9 +124,9 @@ export class TreeMapViewComponent {
       this.selectedIndex = 0;
       this.dfs.get_data('data/json/'+this.Index[this.selectedIndex].name);
     });
-    
+
     this.dfs.callbackResponse.subscribe(response => {
-      
+
       this.data = this.dfs.data;
       //console.log(JSON.stringify(this.data));
       this.timesteps = this.dfs.timesteps;
@@ -143,9 +143,9 @@ export class TreeMapViewComponent {
         clearInterval(this.timer);
         this.playing = false;
       }
-      
+
     });
-    
+
 
     //this.options.data = this.data[0].children;
     // set the flag to true to stop displaying the loading spinner and show the table.
@@ -153,7 +153,7 @@ export class TreeMapViewComponent {
   }
 
   public update_index_time(event){
-   
+
     this.index_time_prev = this.index_time;
     this.index_time = +event.target.value;
     let diff = tree_diff_v1(this.data[this.index_time_prev], this.data[this.index_time], [""], []);
@@ -187,7 +187,7 @@ export class TreeMapViewComponent {
 
     let diff = tree_diff_v1(this.data[this.index_time], this.data[this.index_time+1], [""], []);
     let changelog = diffs_to_changelog(diff);
-    
+
     if(changelog.length==0){
       this.index_time++;
       this.update(this.index_time);
@@ -208,8 +208,8 @@ export class TreeMapViewComponent {
         options.data = { name: this.data[this.index_time].time+" ", children: this.data[this.index_time].children };
         options.data.children[0].name += "    ";
         this.options = options;
-        
-       
+
+
         this.state+=2;
         return;
       }
@@ -250,9 +250,9 @@ export class TreeMapViewComponent {
     if (!this.playing) {
       this.playing = true;
       this.timer = setInterval(() => {
-        
+
         if (this.index_time + 1 < this.timesteps.length) {
-          
+
           this.next_state();
         }
         else{
