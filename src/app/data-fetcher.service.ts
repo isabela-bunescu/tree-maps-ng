@@ -14,7 +14,7 @@ import { rectangle } from '@amcharts/amcharts4/.internal/core/rendering/Path';
 
 export class DataFetcherService {
   // backend address
-  base_url: string = 'http://10.0.1.141:5000/';
+  base_url: string = 'api/';
   public data : any;
   public timesteps = [0,0];
   public callbackResponse = new Subject();
@@ -68,6 +68,10 @@ export class DataFetcherService {
 
   public fetch_data(path: string){
     return this.http.get<any>(this.base_url + path);
+  }
+
+  public put_index(idx: IndexEntry){
+    return this.http.put<any>(this.base_url + "data/index", idx);
   }
 
   public async get_data(path :string){

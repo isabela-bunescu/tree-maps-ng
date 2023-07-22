@@ -22,6 +22,21 @@ export class EditComponent {
  //public shown = new Map<string, boolean>();
   public shown = new Set<String>();
 
+  // alerts
+  message_error: string = "";
+  message_success: string = "";
+  show_error: boolean = false;
+  show_success: boolean = false;
+
+  public dismiss_error(){
+    this.show_error = false;
+    this.message_error = "";
+  }
+
+  public dismiss_success(){
+    this.show_success = false;
+    this.message_success = "";
+  }
  constructor(private dfs: DataFetcherService, private route: ActivatedRoute) {
   this.Index = {} as IndexEntry;
  }
@@ -54,8 +69,19 @@ export class EditComponent {
  }
 
  public saveIndex(){
-
   console.log('Saving', this.Index);
+  this.dfs.put_index(this.Index)
+  .subscribe({
+    next: data => {
+       // this.postId = data.id;
+       this.message_success = "Index saved";
+       this.show_success = true;
+    },
+    error: error => {
+        //this.errorMessage = error.message;
+        console.error('There was an error!', error);
+    }
+});
  }
 
  public selectTime(event: any){
@@ -72,6 +98,50 @@ export class EditComponent {
 
  public value_smart_print(n){
   return value_smart_print(n);
+ }
+
+ public change_node_value(name, event){
+  console.log(name, event.target.value);
+  let index_stack: number[] = [0];
+  let level: number = 0;
+
+ }
+
+ private find_node(name: string, root: TreeMapNode){
+    if(root.name == name)
+      return root;
+    else{
+      for(let c of root.children)
+        return this.find_node(name, c);
+    }
+ }
+
+ private rebuild_tree_without_node(name: string, root: TreeMapNode){
+
+  for(let c of root.children)
+    if(c.name != name)
+      return ;
+ }
+
+ public delete_this(name: string){
+  let ch = this.find_node(name, this.data[this.selected_index]);
+  if(ch.leaf)
+  {
+   // this.data[this.selected_index] = this.rebuild_tree_without_node(name, this.data[this.selected_index]);
+  }
+  else
+  {
+    //for(let i = 0; i < this.timesteps.length; i++)
+   //   this.data[i] = this.rebuild_tree_without_node(name, this.data[i]);
+  }
+ }
+
+ public delete_until(name: string){
+
+ }
+
+ public delete_after(name: string){
+
  }
 }
 
