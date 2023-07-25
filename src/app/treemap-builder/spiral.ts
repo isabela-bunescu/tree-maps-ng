@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { Change, RectNode, TreeMapNode } from "../tree-map-node";
+import { Change, IsIn, RectNode, TreeMapNode } from "../tree-map-node";
 
 export function BuildSpiral(root: TreeMapNode, x0: number, x1: number, y0: number, y1: number, cmin: number, cmax: number, ascending: boolean) {
 
@@ -34,13 +34,13 @@ export function BuildSpiral(root: TreeMapNode, x0: number, x1: number, y0: numbe
   var nodesSum = 0;
   var all_rects: RectNode[] = [];
 
-  for (i = 0; i<n; i++) nodesSum += nodes[i].value;
+  for (i = 0; i < n; i++) nodesSum += nodes[i].value;
 
 
 
-  for(i=0;i<n;i++) {
+  for (i = 0; i < n; i++) {
 
-    let node : RectNode = { name: nodes[i].name, value: nodes[i].value, x0: x0, x1: x1, y0: y0, y1: y1, color: "", color_h: 0, color_s: 0, color_l: 0, color_a: 0 } as RectNode;
+    let node: RectNode = { name: nodes[i].name, value: nodes[i].value, x0: x0, x1: x1, y0: y0, y1: y1, color: "", color_h: 0, color_s: 0, color_l: 0, color_a: 0 } as RectNode;
     segment.push(node);
 
     segmentSum += node.value;
@@ -76,7 +76,7 @@ export function BuildSpiral(root: TreeMapNode, x0: number, x1: number, y0: numbe
       });
     }
 
-    node = segment[segment.length-1];
+    node = segment[segment.length - 1];
 
     // Compute new aspect ratio.
     nodeAspectRatio = direction & 1 ? (node.y1 - node.y0) / (node.x1 - node.x0) : (node.x1 - node.x0) / (node.y1 - node.y0);
@@ -112,21 +112,20 @@ export function BuildSpiral(root: TreeMapNode, x0: number, x1: number, y0: numbe
   all_rects = all_rects.concat(segment);
 
   let arr: RectNode[] = [];
-  nodesSum = nodes.reduce((v,el)=> el.value+v, 0);
+  nodesSum = nodes.reduce((v, el) => el.value + v, 0);
   let cnow: number = cmin;
 
-  for(let i=0; i<all_rects.length; i++)
-  {
+  for (let i = 0; i < all_rects.length; i++) {
 
-    let deltac = all_rects[i].value / nodesSum * (cmax-cmin);
-    arr = arr.concat(BuildSpiral(nodes[i], all_rects[i].x0, all_rects[i].x1, all_rects[i].y0, all_rects[i].y1, cnow, cnow+deltac, ascending));
+    let deltac = all_rects[i].value / nodesSum * (cmax - cmin);
+    arr = arr.concat(BuildSpiral(nodes[i], all_rects[i].x0, all_rects[i].x1, all_rects[i].y0, all_rects[i].y1, cnow, cnow + deltac, ascending));
     cnow += deltac;
   }
 
   return arr;
 }
 
-export function BuildSpiralCont(root: TreeMapNode, root_ref: TreeMapNode, x0: number, x1: number, y0: number, y1: number, cmin: number, cmax: number, ascending: boolean) {
+export function BuildSpiralCont(root: TreeMapNode, root_ref: TreeMapNode, x0: number, x1: number, y0: number, y1: number, cmin: number, cmax: number, ascending: boolean, x0r: number, x1r: number, y0r: number, y1r: number) {
 
   if (root.leaf)
     return [{ name: root.name, value: root.value, x0: x0, x1: x1, y0: y0, y1: y1, color: "#fff000", color_h: (Math.round(360 * (cmin + cmax) / 2) + 60) % 360, color_s: 50, color_l: 40, color_a: 1.0, transition: Change.None } as RectNode];
@@ -136,16 +135,32 @@ export function BuildSpiralCont(root: TreeMapNode, root_ref: TreeMapNode, x0: nu
   var WEST = 2;
   var NORTH = 3;
   var direction = EAST;
-  let nodes: TreeMapNode[] = root.children.map(el => el).sort((a, b) => {
-    if (ascending)
-      return a.value - b.value;
-    else
-      return b.value - a.value;
-  });
+
+
+  let idx = root_ref.children.map((el, id) => { return { v: el.value, id: id, n: el.name }; });
+  // add if something is to add
+
+  idx = idx.concat(
+    root.children.filter((el) => {
+      return !IsIn(idx, (e2) => { return e2.n == el.name; })
+    })
+      .map((el, id) => {
+        return { v: el.value, id: id, n: el.name };
+      }));
+  // delete if something needs to be deleted
+  idx = idx.filter((el) => { return IsIn(root.children, (e2) => { return el.n.localeCompare(e2.name) == 0; }) });
+  // sort the indices
+  idx = idx.sort((b, a) => { return a.v - b.v; });
+
+  let nodes: any[] = root.children.sort((a, b) => {
+      if (ascending)
+        return a.value - b.value;
+      else
+        return b.value - a.value;
+    });
 
   //var node: TreeMapNode;
   var n = nodes.length;
-  var i = -1;
   var newX0 = x0;
   var newX1 = x1;
   var newY0 = y0;
@@ -158,14 +173,13 @@ export function BuildSpiralCont(root: TreeMapNode, root_ref: TreeMapNode, x0: nu
   let segmentSum = 0;
   var nodesSum = 0;
   var all_rects: RectNode[] = [];
+  var ref_rects: RectNode[] = [];
 
-  for (i = 0; i<n; i++) nodesSum += nodes[i].value;
+  for (let i = 0; i < n; i++) nodesSum += nodes[i].value;
 
+  for (let i = 0; i < n; i++) {
 
-
-  for(i=0;i<n;i++) {
-
-    let node : RectNode = { name: nodes[i].name, value: nodes[i].value, x0: x0, x1: x1, y0: y0, y1: y1, color: "", color_h: 0, color_s: 0, color_l: 0, color_a: 0 } as RectNode;
+    let node: RectNode = { name: nodes[i].name, value: nodes[i].value, x0: x0, x1: x1, y0: y0, y1: y1, color: "", color_h: 0, color_s: 0, color_l: 0, color_a: 0 } as RectNode;
     segment.push(node);
 
     segmentSum += node.value;
@@ -201,7 +215,7 @@ export function BuildSpiralCont(root: TreeMapNode, root_ref: TreeMapNode, x0: nu
       });
     }
 
-    node = segment[segment.length-1];
+    node = segment[segment.length - 1];
 
     // Compute new aspect ratio.
     nodeAspectRatio = direction & 1 ? (node.y1 - node.y0) / (node.x1 - node.x0) : (node.x1 - node.x0) / (node.y1 - node.y0);
@@ -237,14 +251,13 @@ export function BuildSpiralCont(root: TreeMapNode, root_ref: TreeMapNode, x0: nu
   all_rects = all_rects.concat(segment);
 
   let arr: RectNode[] = [];
-  nodesSum = nodes.reduce((v,el)=> el.value+v, 0);
+  nodesSum = nodes.reduce((v, el) => el.value + v, 0);
   let cnow: number = cmin;
 
-  for(let i=0; i<all_rects.length; i++)
-  {
+  for (let i = 0; i < all_rects.length; i++) {
 
-    let deltac = all_rects[i].value / nodesSum * (cmax-cmin);
-    arr = arr.concat(BuildSpiralCont(nodes[i], nodes[i], all_rects[i].x0, all_rects[i].x1, all_rects[i].y0, all_rects[i].y1, cnow, cnow+deltac, ascending));
+    let deltac = all_rects[i].value / nodesSum * (cmax - cmin);
+    arr = arr.concat(BuildSpiralCont(nodes[i], nodes[i], all_rects[i].x0, all_rects[i].x1, all_rects[i].y0, all_rects[i].y1, cnow, cnow + deltac, ascending, ref_rects[i].x0, ref_rects[i].x1, ref_rects[i].y0, ref_rects[i].y1));
     cnow += deltac;
   }
 
