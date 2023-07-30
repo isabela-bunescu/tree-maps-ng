@@ -44,6 +44,17 @@ export function IsIn(arr: any[], predicate) {
 }
 
 /**
+ * compute the aspect ratio and inverts it if < 1.
+ * @param w width
+ * @param h height
+ * @returns the aspect ratio >= 1
+ */
+export function ratio(w: number, h: number) {
+  let x = w/h;
+  return x > 1 ? x : 1 / x;
+}
+
+/**
  * convert unstructured tree data from the server into typescript-friendly format (all nodes will be treated the same)
  * @param data
  * @returns
@@ -262,9 +273,9 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: string, width: 
       rectangles.push(BuildSquarify(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, x0r: 0, x1r: width, y0r: 0, y1r: height, cmin: 0, cmax: 1 }, "mean"));
     if (layout == "s&d_h")
       rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, slice: 1, cmin: 0, cmax: 1 }));
-      if (layout == "s&d_v")
+    if (layout == "s&d_v")
       rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, slice: 0, cmin: 0, cmax: 1 }));
-      if (layout == "s&d_auto")
+    if (layout == "s&d_auto")
       rectangles.push(SliceAndDiceAutoCont(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, x0r: 0, x1r: width, y0r: 0, y1r: height, slice: 0, cmin: 0, cmax: 1 }));
     if (layout == "spa")
       rectangles.push(BuildSpiral(trees[i], 0, width, 0, height, 0, 1, true));

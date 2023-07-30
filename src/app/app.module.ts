@@ -18,6 +18,8 @@ import {MatInputModule} from '@angular/material/input';
 import {MatSelectModule} from '@angular/material/select';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import { EditComponent } from './edit/edit.component';
+import { LoginPageComponent } from './login-page/login-page.component';
+import { UserListComponent } from './user-list/user-list.component';
 
 @NgModule({
   declarations: [
@@ -27,7 +29,9 @@ import { EditComponent } from './edit/edit.component';
     TreeMapViewD3Component,
     DatasetsViewerComponent,
     HomeViewComponent,
-    EditComponent
+    EditComponent,
+    LoginPageComponent,
+    UserListComponent
   ],
   imports: [
     BrowserModule,

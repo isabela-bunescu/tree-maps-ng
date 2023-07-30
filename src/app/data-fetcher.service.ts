@@ -7,6 +7,7 @@ import { IndexEntry } from './index-entry';
 import { TreeMap } from '@amcharts/amcharts4/charts';
 import { BuildTreeMap, RectNode, TreeConversion, TreeMapNode } from './tree-map-node';
 import { rectangle } from '@amcharts/amcharts4/.internal/core/rendering/Path';
+import { UserData } from './user-data';
 
 @Injectable({
   providedIn: 'root'
@@ -144,5 +145,14 @@ export class DataFetcherService {
 
       return this.http.delete(this.base_url + 'data/delete/' + name);
 
+    }
+    public remove_user(name){
+      return this.http.delete(this.base_url + 'users/delete/' + name);
+    }
+    public fetch_users(){
+      return this.http.get<any>(this.base_url + "users/list");
+    }
+    public create_users(user: UserData){
+      return this.http.put<any>(this.base_url + "users/add", user);
     }
 }
