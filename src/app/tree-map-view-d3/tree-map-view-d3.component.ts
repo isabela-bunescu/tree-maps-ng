@@ -118,13 +118,49 @@ export class TreeMapViewD3Component {
     if (!this.playing) {
       this.playing = true;
 
-      let callback_timer = () => {
+      let callback_timer_old = () => {
         if (this.changelog_now[this.index_time].length == 0)
           this.wait_multiple = 0;
         else
           this.wait_multiple++;
         if (this.wait_multiple == 6) { this.index_time++; this.wait_multiple = 0; return; }
         if (this.wait_multiple > 1) return;
+
+        //console.log(this.wait_multiple);
+
+        if (this.index_time + 1 < this.timesteps.length) {
+
+          this.changelog_display = this.changelog_now[this.index_time].map(el => {
+            if (el.Type == "Delete")
+              return { color: "danger", message: "Deleted the node " + el.Name + " from " + el.Path_before };
+            else if (el.Type == "Create")
+              return { color: "success", message: "Created the node " + el.Name + " in " + el.Path_after };
+            else
+              return { color: "warning", message: "Moved the node " + el.Name + " from " + el.Path_before + " to " + el.Path_after };
+          }
+          );
+
+          this.animate_new(this.rectangles[this.index_time], this.rectangles[this.index_time + 1], this.changelog_now[this.index_time].length > 0);
+
+          if (this.changelog_now[this.index_time].length == 0 || this.changelog_now[this.index_time].length == 6)
+            this.index_time++;
+
+        }
+        else {
+          clearInterval(this.timer);
+          this.playing = false;
+          this.changelog_display = [];
+        }
+      }
+
+      let callback_timer = () => {
+        let delay: number = 0;
+
+        if (this.changelog_now[this.index_time].length == 0)
+          this.wait_multiple = 0;
+        else
+          this.wait_multiple++;
+
 
         //console.log(this.wait_multiple);
 
