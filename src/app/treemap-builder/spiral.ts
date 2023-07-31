@@ -14,7 +14,8 @@ export function BuildSpiral(
   y1: number,
   cmin: number,
   cmax: number,
-  ascending: boolean
+  ascending: boolean,
+  path: string[] = []
 ) {
   if (root.leaf)
     return [
@@ -31,6 +32,7 @@ export function BuildSpiral(
         color_l: 40,
         color_a: 1.0,
         transition: Change.None,
+        path: path
       } as RectNode,
     ];
 
@@ -168,7 +170,8 @@ export function BuildSpiral(
         all_rects[i].y1,
         cnow,
         cnow + deltac,
-        ascending
+        ascending,
+        path.concat(root.name)
       )
     );
     cnow += deltac;
@@ -190,7 +193,8 @@ export function BuildSpiralCont(
   x0r: number,
   x1r: number,
   y0r: number,
-  y1r: number
+  y1r: number,
+  path: string[] = []
 ) {
   if (root.leaf)
     return [
@@ -207,6 +211,7 @@ export function BuildSpiralCont(
         color_l: 40,
         color_a: 1.0,
         transition: Change.None,
+        path: path
       } as RectNode,
     ];
 
@@ -477,7 +482,8 @@ export function BuildSpiralCont(
         rect_ref == undefined ? 0 : rect_ref.x0,
         rect_ref == undefined ? 0 : rect_ref.x1,
         rect_ref == undefined ? 0 : rect_ref.y0,
-        rect_ref == undefined ? 0 : rect_ref.y1
+        rect_ref == undefined ? 0 : rect_ref.y1,
+        path.concat(root.name)
       )
     );
     cnow += deltac;

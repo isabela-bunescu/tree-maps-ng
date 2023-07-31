@@ -1,8 +1,8 @@
 import { Change, IsIn, RectNode, TreeMapNode } from "../tree-map-node";
 
-export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_division: any, type: string): RectNode[] {
+export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_division: any, type: string, path: string[] = []): RectNode[] {
   if (tree.leaf)
-    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (parent_division.cmin + parent_division.cmax) / 2) + 60) % 360, color_s: 50, color_l: 40, color_a: 1.0, transition: Change.None } as RectNode]
+    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (parent_division.cmin + parent_division.cmax) / 2) + 60) % 360, color_s: 50, color_l: 40, color_a: 1.0, transition: Change.None, path: path } as RectNode]
   else {
 
     let arr: RectNode[] = [];
@@ -99,7 +99,7 @@ export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_d
             let delta_c = (c.value / val) * (parent_division.cmax - parent_division.cmin);
             let delta = (c.value / total_value_frontier) * (Y1 - Y0);
             let delta_ref = (idx.value / total_value_frontier_ref) * (Y1r - Y0r);
-            arr = arr.concat(BuildSquarify(c, cr, { x0: X0, x1: X0 + width, y0: so_far, y1: so_far + delta, x0r: X0r, x1r: X0r + width_ref, y0r: so_far_ref, y1r: so_far_ref + delta_ref, cmin: cstart, cmax: cstart + delta_c }, type));
+            arr = arr.concat(BuildSquarify(c, cr, { x0: X0, x1: X0 + width, y0: so_far, y1: so_far + delta, x0r: X0r, x1r: X0r + width_ref, y0r: so_far_ref, y1r: so_far_ref + delta_ref, cmin: cstart, cmax: cstart + delta_c }, type, path.concat(tree.name)));
             cstart += delta_c;
             so_far += delta;
             so_far_ref += delta_ref;
@@ -162,7 +162,7 @@ export function BuildSquarify(tree: TreeMapNode, tree_ref: TreeMapNode, parent_d
             let delta_c = (c.value / val) * (parent_division.cmax - parent_division.cmin);
             let delta = (c.value / total_value_frontier) * (X1 - X0);
             let delta_ref = (idx.value / total_value_frontier_ref) * (X1r - X0r);
-            arr = arr.concat(BuildSquarify(c, cr, { x0: so_far, x1: so_far + delta, y0: Y0, y1: Y0 + height, x0r: so_far_ref, x1r: so_far_ref + delta_ref, y0r: Y0r, y1r: Y0r + height_ref, cmin: cstart, cmax: cstart + delta_c }, type));
+            arr = arr.concat(BuildSquarify(c, cr, { x0: so_far, x1: so_far + delta, y0: Y0, y1: Y0 + height, x0r: so_far_ref, x1r: so_far_ref + delta_ref, y0r: Y0r, y1r: Y0r + height_ref, cmin: cstart, cmax: cstart + delta_c }, type, path.concat(tree.name)));
             cstart += delta_c;
             so_far += delta;
             so_far_ref += delta_ref;

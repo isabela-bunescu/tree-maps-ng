@@ -1,8 +1,75 @@
 import { Change, RectNode, TreeMapNode } from "../tree-map-node";
 
-export function SliceAndDiceAutoCont(tree: TreeMapNode, tree_ref: TreeMapNode, parent_division: any): RectNode[] {
+/**
+ *
+ * @param tree
+ * @param tree_ref initial tree which the topology is based on
+ * @param parent_division
+ * @returns
+ */
+export function SliceAndDiceTreeMapCont(tree: TreeMapNode, tree_ref: TreeMapNode, parent_division: any, path: string[] = []): RectNode[] {
   if (tree.leaf)
-    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (parent_division.cmin + parent_division.cmax) / 2) + 300) % 360, color_s: 50, color_l: 40, color_a: 1.0, transition: Change.None } as RectNode]
+    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (parent_division.cmin + parent_division.cmax) / 2) + 300) % 360, color_s: 50, color_l: 40, color_a: 1.0, transition: Change.None, path: path} as RectNode]
+  else {
+    let start, end, new_slice;
+    if (parent_division.slice == 0) {
+      start = parent_division.x0;
+      end = parent_division.x1;
+      new_slice = 1;
+    }
+    else {
+      start = parent_division.y0;
+      end = parent_division.y1;
+      new_slice = 0;
+    }
+
+    let arr: RectNode[] = [];
+    let val = tree.children.reduce((pv, ch) => { return pv + ch.value; }, 0);
+    let so_far = 0;
+
+    let ordered = tree_ref.children.map(el => { return { value: el.value, name: el.name }; });
+
+    ordered = ordered.filter((el) => {
+      return tree.children.filter(el2 => {
+        return el2.name == el.name;
+      }).length > 0;
+    });
+
+    ordered = ordered.concat(tree.children.filter(el => {
+      return ordered.filter(el2 => { return el.name == el2.name; }).length == 0;
+    })
+      .map(el => { return { value: el.value, name: el.name }; }));
+
+    ordered = ordered.sort((a, b) => { return a.value - b.value; });
+    let cstart = parent_division.cmin;
+
+    for (let o of ordered) {
+      let c = tree.children.find(el => { return el.name == o.name; }) as TreeMapNode;
+      let tr = tree_ref.children.find(el => { return el.name == o.name; }) as TreeMapNode;
+      //for (let i = 0; i < tree.children.length; i++) {
+      //let c = tree.children[i];
+
+      let delta = (c.value / val) * (end - start);
+      let delta_c = c.value / val * (parent_division.cmax - parent_division.cmin)
+
+      if (parent_division.slice == 0)
+        arr = arr.concat(SliceAndDiceTreeMapCont(c, tr, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice, cmin: cstart, cmax: cstart + delta_c}, path.concat(tree.name)))
+
+      if (parent_division.slice == 1)
+        arr = arr.concat(SliceAndDiceTreeMapCont(c, tr, { x0: parent_division.x0, x1: parent_division.x1, y0: start + so_far, y1: start + so_far + delta, slice: new_slice, cmin: cstart, cmax: cstart + delta_c}, path.concat(tree.name)))
+      so_far += delta;
+      cstart += delta_c;
+    }
+    return arr;
+  }
+
+}
+
+
+
+export function SliceAndDiceAutoCont(tree: TreeMapNode, tree_ref: TreeMapNode, parent_division: any, path: string[] = []): RectNode[] {
+  if (tree.leaf)
+    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (parent_division.cmin + parent_division.cmax) / 2) + 300) % 360, color_s: 50, color_l: 40, color_a: 1.0, transition: Change.None, path: path } as RectNode]
   else {
     let start, end, new_slice, start_ref, end_ref;
     if ((parent_division.x1r-parent_division.x0r)<(parent_division.y1r-parent_division.y0r)) {
@@ -56,10 +123,10 @@ export function SliceAndDiceAutoCont(tree: TreeMapNode, tree_ref: TreeMapNode, p
 
 
       if (new_slice == 0)
-        arr = arr.concat(SliceAndDiceAutoCont(c, tr, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, x0r: start_ref + so_far_ref, x1r: start_ref + so_far_ref + delta_ref, y0r: parent_division.y0r, y1r: parent_division.y1r, slice: new_slice, cmin: cstart, cmax: cstart + delta_c }))
+        arr = arr.concat(SliceAndDiceAutoCont(c, tr, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, x0r: start_ref + so_far_ref, x1r: start_ref + so_far_ref + delta_ref, y0r: parent_division.y0r, y1r: parent_division.y1r, slice: new_slice, cmin: cstart, cmax: cstart + delta_c }, path.concat(tree.name)))
 
       if (new_slice == 1)
-        arr = arr.concat(SliceAndDiceAutoCont(c, tr, { x0: parent_division.x0, x1: parent_division.x1, y0: start + so_far, y1: start + so_far + delta, x0r: parent_division.x0r, x1r: parent_division.x1r, y0r: start_ref + so_far_ref, y1r: start_ref + so_far_ref + delta_ref, slice: new_slice, cmin: cstart, cmax: cstart + delta_c }))
+        arr = arr.concat(SliceAndDiceAutoCont(c, tr, { x0: parent_division.x0, x1: parent_division.x1, y0: start + so_far, y1: start + so_far + delta, x0r: parent_division.x0r, x1r: parent_division.x1r, y0r: start_ref + so_far_ref, y1r: start_ref + so_far_ref + delta_ref, slice: new_slice, cmin: cstart, cmax: cstart + delta_c }, path.concat(tree.name)))
       so_far += delta;
       so_far_ref += delta_ref;
       cstart += delta_c;

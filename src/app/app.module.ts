@@ -20,6 +20,7 @@ import {MatFormFieldModule} from '@angular/material/form-field';
 import { EditComponent } from './edit/edit.component';
 import { LoginPageComponent } from './login-page/login-page.component';
 import { UserListComponent } from './user-list/user-list.component';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @NgModule({
   declarations: [
@@ -43,7 +44,9 @@ import { UserListComponent } from './user-list/user-list.component';
     BrowserAnimationsModule,
     MatInputModule,
     MatSelectModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    NgbModule,
+    ReactiveFormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

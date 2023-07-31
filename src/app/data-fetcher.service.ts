@@ -152,7 +152,8 @@ export class DataFetcherService {
     public fetch_users(){
       return this.http.get<any>(this.base_url + "users/list");
     }
-    public create_users(user: UserData){
+
+    public create_user(user: UserData){
       return this.http.put<any>(this.base_url + "users/add", user);
     }
 }
