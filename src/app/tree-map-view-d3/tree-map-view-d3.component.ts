@@ -46,7 +46,7 @@ export class TreeMapViewD3Component {
   public svg_handle;
   public wait_multiple: number = 0;
   public animation_duration: number = 1000;
-  public animation_duration_change: number = 1000;
+  public animation_duration_change: number = 6000;
   public changelog_display: any[] = [];
   public svg_height: number = 0;
   public svg_width: number = 0;
@@ -129,7 +129,7 @@ export class TreeMapViewD3Component {
 
   public start() {
     this.wait_multiple = 0;
-    this.animation_duration_change = 6 * this.animation_duration;
+
     if (!this.playing) {
       this.playing = true;
 
@@ -197,7 +197,7 @@ export class TreeMapViewD3Component {
         let delay: number = 0;
         if (this.changelog_now[this.index_time].length == 0)
           delay = this.animation_duration;
-        else delay = this.animation_duration * 8;
+        else delay = this.animation_duration_change;
 
         //console.log(this.wait_multiple);
 
@@ -426,22 +426,20 @@ export class TreeMapViewD3Component {
           };
         } else if (d.end.transition == Change.Create) {
           ret = (t) => {
+            let t_start = 0.8;
+            let length = 0.2;
             let hue_angle = d.end.color_h;
-            let sat = Math.round(
-              interp_hat(
-                t,
-                2 / 3 + 1 / 10,
-                2 / 3 + 1 / 6,
-                1,
-                d.end.color_s,
-                100,
-                d.end.color_s
-              )
-            );
+            let sat: number = t < 0.9 ?
+            ((100 - d.end.color_s) / 2) *
+              Math.sin(
+                ((t - t_start) / length) * 10 * Math.PI - 0.5 * Math.PI
+              ) +
+            d.end.color_s +
+            (100 - d.start.color_s) / 2 : d.end.color_s ;
             let alpha: number = interp_lin(
               t,
-              2 / 3 + 1 / 10,
-              2 / 3 + 2 / 10,
+              t_start,
+              t_start + 1/20,
               0.0,
               1.0
             );
