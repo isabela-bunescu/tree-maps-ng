@@ -58,10 +58,10 @@
 
   <div
     *ngIf="isLoaded"
-    class="justify-content-center"
+    class="form-row"
     style="display: flex; align-content: center"
   >
-    <div class="d-flex flex-column justify-content-center">
+    <div class="form-group col-md-6 col-xs-12">
       <label for="customRange3" class="form-label" style="position: absolute"
         >Time: {{ timesteps[index_time] }}</label>
       <input
@@ -77,8 +77,8 @@
         (input)="update_index_time($event)"
       />
     </div>
-    <div class="d-flex flex-column justify-content-center">
-      <div class="p-2 d-flex justify-content-right">
+    <div style="padding-left: 10px; padding-right: 10px" class="form-group col-md-2 col-xs-3">
+
         <div class="btn-group">
           <button
             style="max-height: 50px"
@@ -159,7 +159,8 @@
             </svg>
           </button>
         </div>
-
+    </div>
+        <div style="padding-left: 10px; padding-right: 10px" class="form-group col-md-auto col-xs-3">
         <div>
           <label for="typeNumber">Normal transition (ms)</label>
           <input
@@ -173,6 +174,8 @@
             [(ngModel)]="this.animation_duration"
           />
         </div>
+        </div>
+        <div style="padding-left: 10px; padding-right: 10px" class="form-group col-md-auto col-xs-3">
         <div>
           <label for="typeNumber">Change transition (ms)</label>
           <input
@@ -186,8 +189,8 @@
             [(ngModel)]="this.animation_duration_change"
           />
         </div>
-      </div>
-    </div>
+        </div>
+
   </div>
 
   <div class="d-flex flex-row justify-content-center">
