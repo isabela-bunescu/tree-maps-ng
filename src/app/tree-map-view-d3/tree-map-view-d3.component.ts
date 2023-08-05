@@ -19,6 +19,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { fromEvent } from 'rxjs';
+import { interp_lin, render_no_change } from '../renderer';
+import { MatSidenavModule } from '@angular/material/sidenav';
 
 @Component({
   selector: 'app-tree-map-view-d3',
@@ -133,75 +135,15 @@ export class TreeMapViewD3Component {
     if (!this.playing) {
       this.playing = true;
 
-      let callback_timer_old = () => {
-        if (this.changelog_now[this.index_time].length == 0)
-          this.wait_multiple = 0;
-        else this.wait_multiple++;
-        if (this.wait_multiple == 6) {
-          this.index_time++;
-          this.wait_multiple = 0;
-          return;
-        }
-        if (this.wait_multiple > 1) return;
-
-        //console.log(this.wait_multiple);
-
-        if (this.index_time + 1 < this.timesteps.length) {
-          this.changelog_display = this.changelog_now[this.index_time].map(
-            (el) => {
-              if (el.Type == 'Delete')
-                return {
-                  color: 'danger',
-                  message:
-                    'Deleted the node ' + el.Name + ' from ' + el.Path_before,
-                };
-              else if (el.Type == 'Create')
-                return {
-                  color: 'success',
-                  message:
-                    'Created the node ' + el.Name + ' in ' + el.Path_after,
-                };
-              else
-                return {
-                  color: 'warning',
-                  message:
-                    'Moved the node ' +
-                    el.Name +
-                    ' from ' +
-                    el.Path_before +
-                    ' to ' +
-                    el.Path_after,
-                };
-            }
-          );
-
-          this.animate_new(
-            this.rectangles[this.index_time],
-            this.rectangles[this.index_time + 1],
-            this.changelog_now[this.index_time].length > 0
-          );
-
-          if (
-            this.changelog_now[this.index_time].length == 0 ||
-            this.changelog_now[this.index_time].length == 6
-          )
-            this.index_time++;
-        } else {
-          clearTimeout(this.timer);
-          this.playing = false;
-          this.changelog_display = [];
-        }
-      };
-
       let callback_timer = () => {
         let delay: number = 0;
-        if (this.changelog_now[this.index_time].length == 0)
-          delay = this.animation_duration;
-        else delay = this.animation_duration_change;
 
         //console.log(this.wait_multiple);
 
-        if (this.index_time + 1 < this.timesteps.length) {
+        if (this.index_time+1 < this.timesteps.length) {
+          if (this.changelog_now[this.index_time].length == 0)
+            delay = this.animation_duration;
+          else delay = this.animation_duration_change;
           this.changelog_display = this.changelog_now[this.index_time].map(
             (el) => {
               if (el.Type == 'Delete')
@@ -235,7 +177,6 @@ export class TreeMapViewD3Component {
             this.rectangles[this.index_time + 1],
             this.changelog_now[this.index_time].length > 0
           );
-
 
           this.index_time++;
           this.timer = setTimeout(callback_timer, delay);
@@ -302,6 +243,13 @@ export class TreeMapViewD3Component {
     });
   }
 
+  public animate_new_2(
+    rectangles_start: RectNode[],
+    rectangles_end: RectNode[]
+  ) {
+    this.update_aspect_ratios(rectangles_end);
+  }
+
   public animate_new(
     rectangles_start: RectNode[],
     rectangles_end: RectNode[],
@@ -312,6 +260,7 @@ export class TreeMapViewD3Component {
     let duration_this: number;
     if (modification) duration_this = this.animation_duration_change;
     else duration_this = this.animation_duration;
+
     var g = this.svg_handle
       .selectAll('.rect')
       .data(rectangles_end)
@@ -319,6 +268,16 @@ export class TreeMapViewD3Component {
       .append('g')
       .classed('rect', true);
 
+    if (modification == false) {
+      render_no_change(
+        rectangles_start,
+        rectangles_end,
+        duration_this,
+        this.svg_handle,
+        'rel'
+      );
+      return;
+    }
     let creation_occurs = false; // flag that will be true if at least one node is created in this transition
     let deletion_occurs = false; // flag that will be true if at least one node gets deleted in this transition
     let rectangles_combined: any[] = rectangles_start.map((el, i) => {
@@ -326,37 +285,6 @@ export class TreeMapViewD3Component {
       if (rectangles_end[i].transition == Change.Delete) deletion_occurs = true;
       return { start: el, end: rectangles_end[i] };
     });
-
-    let interp_lin = (
-      t: number,
-      t0: number,
-      t1: number,
-      y0: number,
-      y1: number
-    ) => {
-      return t >= t0 && t <= t1
-        ? y0 + ((t - t0) / (t1 - t0)) * (y1 - y0)
-        : t < t0
-        ? y0
-        : y1;
-    }; // ramp function ___/------
-    let interp_hat = (
-      t: number,
-      t0: number,
-      t1: number,
-      t2: number,
-      y0: number,
-      y1: number,
-      y2: number
-    ) => {
-      return t >= t0 && t <= t1
-        ? y0 + ((t - t0) / (t1 - t0)) * (y1 - y0)
-        : t > t1 && t <= t2
-        ? y1 + ((t - t1) / (t2 - t1)) * (y2 - y1)
-        : t < t0
-        ? y0
-        : y2;
-    }; // ramp function ___/------
 
     d3.select('body')
       .select('svg')
@@ -429,17 +357,19 @@ export class TreeMapViewD3Component {
             let t_start = 0.8;
             let length = 0.2;
             let hue_angle = d.end.color_h;
-            let sat: number = t < 0.9 ?
-            ((100 - d.end.color_s) / 2) *
-              Math.sin(
-                ((t - t_start) / length) * 10 * Math.PI - 0.5 * Math.PI
-              ) +
-            d.end.color_s +
-            (100 - d.start.color_s) / 2 : d.end.color_s ;
+            let sat: number =
+              t < 0.9
+                ? ((100 - d.end.color_s) / 2) *
+                    Math.sin(
+                      ((t - t_start) / length) * 10 * Math.PI - 0.5 * Math.PI
+                    ) +
+                  d.end.color_s +
+                  (100 - d.start.color_s) / 2
+                : d.end.color_s;
             let alpha: number = interp_lin(
               t,
               t_start,
-              t_start + 1/20,
+              t_start + 1 / 20,
               0.0,
               1.0
             );
@@ -634,32 +564,6 @@ export class TreeMapViewD3Component {
     d3.select('svg')
       .selectAll('foreignObject')
       .data(rectangles_combined)
-      //.attr("x", (d) => { return ((d.end.x0 )).toString() + ""; })
-      //.attr("y", (d) => { return ((d.end.y0 )).toString() + ""; })
-      //.attr("width",(d) =>  { return ((d.end.x1 - d.end.x0)).toString() + "";})
-      //.attr("height",(d) =>  { return ((d.end.y1 - d.end.y0)).toString() + "";})
-      /*.append("xhtml:div")
-      //.style("width", (d) =>  { return ((d.x1 - d.x0)).toString() + "px";})
-      //.style("height", (d) =>  { return ((d.y1 - d.y0)).toString() + "px";})
-      .style("color", "#fff")
-      .style("white-space", "pre-wrap")
-      .style("white-space", "-moz-pre-wrap")
-      .style("white-space", "-pre-wrap")
-      .style(" white-space", "-o-pre-wrap")
-      .style("word-wrap", "normal")
-      .style("text-align", "center")
-      .style("display", "flex")
-      .style("justify-content", "center")
-      .style("align-items", "center")
-      .style("overflow-y", "hidden")
-      .style("overflow-x", "hidden")
-      .style("font-size", "16px")*/
-      /*.html((d) => {
-        if(Math.floor((d.end.y1 - d.end.y0)) < 16  || Math.floor((d.end.x1 - d.end.x0)) < 10)
-          return ""
-        else
-          return d.end.name + " - " + value_smart_print(d.end.value);
-      })*/
       .transition()
       .tween('position', function (d) {
         let currentAngle = d.start.color_h;

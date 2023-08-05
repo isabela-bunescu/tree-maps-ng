@@ -1,85 +1,195 @@
-<div *ngIf="show_error" class="alert alert-danger alert-dismissible" role="alert">
-  {{message_error}}
-  <button type="button" class="btn-close" (click)="dismiss_error()" aria-label="Close"></button>
+<div
+  *ngIf="show_error"
+  class="alert alert-danger alert-dismissible"
+  role="alert"
+>
+  {{ message_error }}
+  <button
+    type="button"
+    class="btn-close"
+    (click)="dismiss_error()"
+    aria-label="Close"
+  ></button>
 </div>
-<div *ngIf="show_success" class="alert alert-success alert-dismissible" role="alert">
-  {{message_success}}
-  <button type="button" class="btn-close" (click)="dismiss_success()" aria-label="Close"></button>
+<div
+  *ngIf="show_success"
+  class="alert alert-success alert-dismissible"
+  role="alert"
+>
+  {{ message_success }}
+  <button
+    type="button"
+    class="btn-close"
+    (click)="dismiss_success()"
+    aria-label="Close"
+  ></button>
 </div>
-<div style="margin-left: 15px;" *ngIf="loaded">
-  <h1> Description: </h1>
-  <p>ID (cannot be changed): {{this.Index.name}}</p>
+<div class="container" style="margin-left: 15px" *ngIf="loaded">
+  <h1>Description:</h1>
+  <p>ID (cannot be changed): {{ this.Index.name }}</p>
   <div class="form-group">
-    <div style="margin-bottom: 20px;">
+    <div style="margin-bottom: 20px">
       <label for="displayName">Display name</label>
-      <input type="name" class="form-control" id="displayName" aria-describedby="nameHelp"
-        [(ngModel)]="this.Index.display_name">
-      <small id="nameHelp" class="form-text text-muted">This is the name that will be displayed.</small>
+      <input
+        type="name"
+        class="form-control"
+        id="displayName"
+        aria-describedby="nameHelp"
+        [(ngModel)]="this.Index.display_name"
+      />
+      <small id="nameHelp" class="form-text text-muted"
+        >This is the name that will be displayed.</small
+      >
     </div>
-    <div style="margin-bottom: 20px;">
+    <div style="margin-bottom: 20px">
       <label for="description">Description</label>
-      <input type="name" class="form-control" id="description" aria-describedby="descriptionHelp"
-        [(ngModel)]="this.Index.description">
-      <small id="descriptionHelp" class="form-text text-muted">Short description of the dataset.</small>
+      <input
+        type="name"
+        class="form-control"
+        id="description"
+        aria-describedby="descriptionHelp"
+        [(ngModel)]="this.Index.description"
+      />
+      <small id="descriptionHelp" class="form-text text-muted"
+        >Short description of the dataset.</small
+      >
     </div>
-
   </div>
-
-  <button class="btn btn-primary" (click)="saveIndex()">Save</button>
+  <div class="btn-group text-center">
+    <button class="btn btn-success" (click)="saveIndex()">Save metadata</button>
+    <button class="btn btn-primary" (click)="reload_data()">Reload</button>
+    <button class="btn btn-success" (click)="saveIndex()">Save data</button>
+  </div>
 </div>
 
-<div style="margin-left: 15px;" class="just-padding" *ngIf="loaded">
-  <h1> Data: </h1>
-  <p> Number of timesteps: {{this.timesteps.length}}, starting from {{this.timesteps[0]}} to
-    {{this.timesteps[this.timesteps.length-1]}}</p>
-  <select class="form-control" id="treemap-datasets" (change)="selectTime($event)">
-    <option *ngFor="let c of timesteps;let i = index" [value]="i"> {{c}} </option>
+<div style="margin-left: 15px" class="just-padding" *ngIf="loaded">
+  <h1>Data:</h1>
+  <p>
+    Number of timesteps: {{ this.timesteps.length }}, starting from
+    {{ this.timesteps[0] }} to {{ this.timesteps[this.timesteps.length - 1] }}
+  </p>
+  <select
+    class="form-control"
+    id="treemap-datasets"
+    (change)="selectTime($event)"
+  >
+    <option *ngFor="let c of timesteps; let i = index" [value]="i">
+      {{ c }}
+    </option>
   </select>
-  <div style="padding-top: 32px;">
+  <div style="padding-top: 32px">
     <ul class="list-group list-group-root">
       <ng-template #recursiveList let-list>
         <ng-container *ngFor="let item of list">
           <li class="list-group-item" *ngIf="shown.has(item.name)">
-
             <div class="d-flex d-flex-row">
-              <div class="p-2" style="width: 100px" (click)="toggleHide(item);"> {{item.name}} </div>
-              <div class="p-2">
-                <input *ngIf="item.leaf" type="name" class="form-control" [value]="item.value" (change)="change_node_value(item.name, $event)">
-                <p *ngIf="!item.leaf" [innerHTML]="value_smart_print(item.value)"> </p>
+              <div class="p-2" style="width: 100px" (click)="toggleHide(item)">
+                {{ item.name }}
               </div>
-              <div class="p-2 flex-grow-1"> </div>
+              <div class="p-2">
+                <input
+                  *ngIf="item.leaf"
+                  type="name"
+                  class="form-control"
+                  [value]="item.value"
+                  (change)="change_node_value(item.name, $event)"
+                />
+                <p
+                  *ngIf="!item.leaf"
+                  [innerHTML]="value_smart_print(item.value)"
+                ></p>
+              </div>
+              <div class="p-2 flex-grow-1"></div>
 
-              <div class="p-2"> <button *ngIf="!item.leaf" class="btn btn-danger"> <svg
-                xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512">
-                <path
-                  d="M170.5 51.6L151.5 80h145l-19-28.4c-1.5-2.2-4-3.6-6.7-3.6H177.1c-2.7 0-5.2 1.3-6.7 3.6zm147-26.6L354.2 80H368h48 8c13.3 0 24 10.7 24 24s-10.7 24-24 24h-8V432c0 44.2-35.8 80-80 80H112c-44.2 0-80-35.8-80-80V128H24c-13.3 0-24-10.7-24-24S10.7 80 24 80h8H80 93.8l36.7-55.1C140.9 9.4 158.4 0 177.1 0h93.7c18.7 0 36.2 9.4 46.6 24.9zM80 128V432c0 17.7 14.3 32 32 32H336c17.7 0 32-14.3 32-32V128H80zm80 64V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16z" />
-              </svg></button>
-              <button *ngIf="item.leaf" class="btn btn-danger"> <svg
-                xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512">
-                <path
-                  d="M170.5 51.6L151.5 80h145l-19-28.4c-1.5-2.2-4-3.6-6.7-3.6H177.1c-2.7 0-5.2 1.3-6.7 3.6zm147-26.6L354.2 80H368h48 8c13.3 0 24 10.7 24 24s-10.7 24-24 24h-8V432c0 44.2-35.8 80-80 80H112c-44.2 0-80-35.8-80-80V128H24c-13.3 0-24-10.7-24-24S10.7 80 24 80h8H80 93.8l36.7-55.1C140.9 9.4 158.4 0 177.1 0h93.7c18.7 0 36.2 9.4 46.6 24.9zM80 128V432c0 17.7 14.3 32 32 32H336c17.7 0 32-14.3 32-32V128H80zm80 64V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16z" />
-              </svg></button>
-              <button *ngIf="item.leaf" class="btn btn-danger"> <svg
-                xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512">
-                <path
-                  d="M170.5 51.6L151.5 80h145l-19-28.4c-1.5-2.2-4-3.6-6.7-3.6H177.1c-2.7 0-5.2 1.3-6.7 3.6zm147-26.6L354.2 80H368h48 8c13.3 0 24 10.7 24 24s-10.7 24-24 24h-8V432c0 44.2-35.8 80-80 80H112c-44.2 0-80-35.8-80-80V128H24c-13.3 0-24-10.7-24-24S10.7 80 24 80h8H80 93.8l36.7-55.1C140.9 9.4 158.4 0 177.1 0h93.7c18.7 0 36.2 9.4 46.6 24.9zM80 128V432c0 17.7 14.3 32 32 32H336c17.7 0 32-14.3 32-32V128H80zm80 64V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16z" />
-              </svg></button>
-              <button *ngIf="item.leaf" class="btn btn-danger" > <svg
-                xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512">
-                <path
-                  d="M170.5 51.6L151.5 80h145l-19-28.4c-1.5-2.2-4-3.6-6.7-3.6H177.1c-2.7 0-5.2 1.3-6.7 3.6zm147-26.6L354.2 80H368h48 8c13.3 0 24 10.7 24 24s-10.7 24-24 24h-8V432c0 44.2-35.8 80-80 80H112c-44.2 0-80-35.8-80-80V128H24c-13.3 0-24-10.7-24-24S10.7 80 24 80h8H80 93.8l36.7-55.1C140.9 9.4 158.4 0 177.1 0h93.7c18.7 0 36.2 9.4 46.6 24.9zM80 128V432c0 17.7 14.3 32 32 32H336c17.7 0 32-14.3 32-32V128H80zm80 64V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16z" />
-              </svg></button> </div>
+              <div class="p-2 btn-group">
+                <button
+                  *ngIf="!item.leaf"
+                  class="btn btn-danger"
+                  (click)="delete_this(item.name)"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    height="1em"
+                    viewBox="0 0 448 512"
+                  >
+                    <path
+                      d="M170.5 51.6L151.5 80h145l-19-28.4c-1.5-2.2-4-3.6-6.7-3.6H177.1c-2.7 0-5.2 1.3-6.7 3.6zm147-26.6L354.2 80H368h48 8c13.3 0 24 10.7 24 24s-10.7 24-24 24h-8V432c0 44.2-35.8 80-80 80H112c-44.2 0-80-35.8-80-80V128H24c-13.3 0-24-10.7-24-24S10.7 80 24 80h8H80 93.8l36.7-55.1C140.9 9.4 158.4 0 177.1 0h93.7c18.7 0 36.2 9.4 46.6 24.9zM80 128V432c0 17.7 14.3 32 32 32H336c17.7 0 32-14.3 32-32V128H80zm80 64V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0V400c0 8.8-7.2 16-16 16s-16-7.2-16-16V192c0-8.8 7.2-16 16-16s16 7.2 16 16z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  *ngIf="item.leaf"
+                  class="btn btn-danger"
+                  (click)="delete_until(item.name)"
+                >
+                  &lt;
+                </button>
+                <button
+                  *ngIf="item.leaf"
+                  class="btn btn-danger"
+                  (click)="delete_this(item.name)"
+                >
+                  &equals;
+                </button>
+                <button
+                  *ngIf="item.leaf"
+                  class="btn btn-danger"
+                  (click)="delete_after(item.name)"
+                >
+                  &gt;
+                </button>
+              </div>
             </div>
             <ul class="list-group" *ngIf="item.children.length > 0">
-              <ng-container *ngTemplateOutlet="recursiveList; context:{ $implicit: item.children }"></ng-container>
-
+              <ng-container
+                *ngTemplateOutlet="
+                  recursiveList;
+                  context: { $implicit: item.children }
+                "
+              ></ng-container>
             </ul>
-
           </li>
         </ng-container>
+        <li class="list-group-item">
+          <div class="d-flex d-flex-row">
+            <div class="p-2" style="width: 100px">
+              <input type="name" class="form-control" />
+            </div>
+            <div class="p-2" >
+              <input type="name" class="form-control" *ngIf="list[0].leaf" />
+            </div>
+            <div class="p-2 flex-grow-1"></div>
+
+            <div class="p-2 btn-group">
+              <button class="btn btn-success" (click)="add_node('', '', 0)">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="1em"
+                  viewBox="0 0 448 512"
+                >
+                  <!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
+                  <style>
+                    svg {
+                      fill: #f5f5f5;
+                    }
+                  </style>
+                  <path
+                    d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </li>
       </ng-template>
+
       <ng-container
-        *ngTemplateOutlet="recursiveList; context:{ $implicit: data[selected_index].children }"></ng-container>
+        *ngTemplateOutlet="
+          recursiveList;
+          context: { $implicit: data[selected_index].children }
+        "
+      ></ng-container>
+
     </ul>
   </div>
 </div>

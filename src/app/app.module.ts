@@ -21,6 +21,7 @@ import { EditComponent } from './edit/edit.component';
 import { LoginPageComponent } from './login-page/login-page.component';
 import { UserListComponent } from './user-list/user-list.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import {MatSidenavModule} from '@angular/material/sidenav';
 
 @NgModule({
   declarations: [
@@ -46,7 +47,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     MatSelectModule,
     MatFormFieldModule,
     NgbModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatSidenavModule,
   ],
   providers: [],
   bootstrap: [AppComponent]
