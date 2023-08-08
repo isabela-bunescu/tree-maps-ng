@@ -20,7 +20,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { fromEvent } from 'rxjs';
 import { interp_lin, render_no_change } from '../renderer';
-import { MatSidenavModule } from '@angular/material/sidenav';
+//import { MatSidenavModule } from '@angular/material/sidenav';
 
 @Component({
   selector: 'app-tree-map-view-d3',
@@ -57,6 +57,7 @@ export class TreeMapViewD3Component {
   public worst_ratio: number = 1;
   public std_ratio: number = 1;
   public best_ratio: number = 1;
+  public side_opened: boolean = true;
 
   /**
    * Compute statistical measures of the aspect ratios of the given rectangles.
@@ -206,8 +207,9 @@ export class TreeMapViewD3Component {
   }
 
   ngOnInit() {
-    this.svg_height = Math.round(window.innerHeight * 0.7);
+    this.svg_height = Math.round(window.innerHeight * 0.8);
     this.svg_width = window.innerWidth;
+
     this.svg_handle = d3.select('body').select('svg g');
 
     let resizeObservable = fromEvent(window, 'resize');
@@ -792,19 +794,20 @@ export class TreeMapViewD3Component {
     let width = this.svg_width;
     let height = this.svg_height;
 
-    this.svg_handle.selectAll('g').remove();
-
-    var g = this.svg_handle
-      .selectAll('.rect')
+    this.svg_handle.selectAll('g.rct').remove();
+    d3.selectAll('g').remove();
+    //var g = this.svg_handle
+    var g = d3.select('svg').selectAll('.rect')
       .data(rectangles)
       .enter()
       .append('g');
+
     //.classed('rect', true)
 
     d3.select('body').selectAll('#tt').remove();
 
     let tip = d3
-      .select('body')
+      .select('#playground')
       .append('div')
       .attr('id', 'tt')
       .style('position', 'absolute')

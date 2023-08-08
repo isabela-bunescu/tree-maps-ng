@@ -22,6 +22,7 @@ import { LoginPageComponent } from './login-page/login-page.component';
 import { UserListComponent } from './user-list/user-list.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import {MatSidenavModule} from '@angular/material/sidenav';
+import {MatIconModule} from '@angular/material/icon';
 
 @NgModule({
   declarations: [
@@ -49,6 +50,7 @@ import {MatSidenavModule} from '@angular/material/sidenav';
     NgbModule,
     ReactiveFormsModule,
     MatSidenavModule,
+    MatIconModule
   ],
   providers: [],
   bootstrap: [AppComponent]

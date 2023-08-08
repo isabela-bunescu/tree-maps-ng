@@ -1,214 +1,213 @@
+<button mat-icon-button (click)="side_opened = !side_opened">
+  <mat-icon>menu</mat-icon>
+</button>
+<mat-sidenav-container>
+  <mat-sidenav style="width: 300px" [(opened)]="side_opened">
+    <div class="d-flex flex-column justify-content-right">
+      <div class="p-3">
+        <label for="treemap-datasets"><b>Choose a dataset:</b> </label>
+        <select
+          class="form-control"
+          id="treemap-datasets"
+          [(ngModel)]="selectedIndex"
+          (ngModelChange)="update_to_new_chart($event)"
+        >
+          <option *ngFor="let c of Index; let i = index" [value]="i">
+            {{ c.display_name }}
+          </option>
+        </select>
+      </div>
+      <div class="element p-3">
+        <label *ngIf="isLoaded" for="treemap-description"
+          ><b> Dataset description: </b>
+        </label>
+        <div id="treemap-description" class="card" *ngIf="isLoaded">
+          {{ Index[selectedIndex].description }}
+        </div>
+      </div>
+      <div class="p-3">
+        <label *ngIf="isLoaded" for="treemap-layouts"
+          ><b>Choose a layout:</b>
+        </label>
+        <select
+          *ngIf="isLoaded"
+          class="form-control"
+          id="treemap-layouts"
+          [(ngModel)]="selectedLayoutIndex"
+          (ngModelChange)="update_to_new_layout($event)"
+        >
+          <option *ngFor="let c of Layouts; let i = index" [value]="i">
+            {{ c.DisplayName }}
+          </option>
+        </select>
+      </div>
 
-<div class="d-flex flex-row justify-content-right">
-  <div class="p-3">
-    <label for="treemap-datasets"><b>Choose a dataset:</b> </label>
-    <select
-      class="form-control"
-      id="treemap-datasets"
-      [(ngModel)]="selectedIndex"
-      (ngModelChange)="update_to_new_chart($event)"
-    >
-      <option *ngFor="let c of Index; let i = index" [value]="i">
-        {{ c.display_name }}
-      </option>
-    </select>
-  </div>
-  <div class="p-3">
-    <label *ngIf="isLoaded" for="treemap-layouts"
-      ><b>Choose a layout:</b>
-    </label>
-    <select
-      *ngIf="isLoaded"
-      class="form-control"
-      id="treemap-layouts"
-      [(ngModel)]="selectedLayoutIndex"
-      (ngModelChange)="update_to_new_layout($event)"
-    >
-      <option *ngFor="let c of Layouts; let i = index" [value]="i">
-        {{ c.DisplayName }}
-      </option>
-    </select>
-  </div>
-  <div class="element p-3">
-    <label *ngIf="isLoaded" for="treemap-description"
-      ><b> Dataset description: </b>
-    </label>
-    <div
-      id="treemap-description"
-      class="card"
-      style="height: 40px"
-      *ngIf="isLoaded"
-    >
-      {{ Index[selectedIndex].description }}
+      <div class="p-3"  *ngIf="isLoaded">
+        <label for="typeNumber">Normal transition (ms)</label>
+        <input
+          min="500"
+          max="9000"
+          step="500"
+          type="number"
+          id="typeNumber"
+          [readOnly]="this.playing"
+          class="form-control"
+          [(ngModel)]="this.animation_duration"
+        />
+      </div>
+      <div class = "p-3" *ngIf="isLoaded">
+        <label for="typeNumber">Change transition (ms)</label>
+        <input
+          min="6000"
+          max="20000"
+          step="2000"
+          type="number"
+          id="typeNumber"
+          [readOnly]="this.playing"
+          class="form-control"
+          [(ngModel)]="this.animation_duration_change"
+        />
+      </div>
     </div>
-  </div>
-</div>
+  </mat-sidenav>
+  <mat-sidenav-content style="background-color: white">
+    <div id="playground">
+      <div>
+        <div id="w1" width="100vw" height="70vh">
+          <svg id="window" [attr.width]="svg_width" [attr.height]="svg_height">
+            <g></g>
+          </svg>
+        </div>
 
-<div>
-  <div id="w1" width="100vw" height="50vh">
-    <svg id="window" [attr.width]="svg_width" [attr.height]="svg_height">
-      <g></g>
-    </svg>
-  </div>
+        <div *ngIf="!isLoaded" class="d-flex justify-content-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only"></span>
+          </div>
+        </div>
 
-  <div *ngIf="!isLoaded" class="d-flex justify-content-center">
-    <div class="spinner-border text-primary" role="status">
-      <span class="sr-only"></span>
-    </div>
-  </div>
-
-  <div
-    *ngIf="isLoaded"
-    class="form-row"
-    style="display: flex; align-content: center"
-  >
-    <div class="form-group col-md-6 col-xs-12">
-      <label for="customRange3" class="form-label" style="position: absolute"
-        >Time: {{ timesteps[index_time] }}</label>
-      <input
-        type="range"
-        class="form-range"
-        style="padding-left: 100px; width: 50vw; padding-right: 50px"
-        [min]="0"
-        [max]="timesteps.length - 1"
-        [step]="1"
-        [value]="index_time"
-        id="customRange3"
-        oninput=""
-        (input)="update_index_time($event)"
-      />
-    </div>
-    <div style="padding-left: 10px; padding-right: 10px" class="form-group col-md-2 col-xs-3">
-
-        <div class="btn-group">
-          <button
-            style="max-height: 50px"
-            (click)="start()"
-            type="button"
-            class="btn btn-success"
-          >
-            <svg
-              width="25px"
-              height="25px"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+        <div
+          *ngIf="isLoaded"
+          class="form-row"
+          style="display: flex; align-content: center"
+        >
+          <div class="form-group col-md-6 col-xs-12">
+            <label
+              for="customRange3"
+              class="form-label"
+              style="position: absolute"
+              >Time: {{ timesteps[index_time] }}</label
             >
-              <path
-                d="M21.4086 9.35258C23.5305 10.5065 23.5305 13.4935 21.4086 14.6474L8.59662 21.6145C6.53435 22.736 4 21.2763 4 18.9671L4 5.0329C4 2.72368 6.53435 1.26402 8.59661 2.38548L21.4086 9.35258Z"
-                fill="#FFFFFF"
-              />
-            </svg>
-          </button>
-
-          <button
-            style="max-height: 50px"
-            (click)="pause()"
-            type="button"
-            class="btn btn-primary"
+            <input
+              type="range"
+              class="form-range"
+              style="padding-left: 100px; width: 50vw; padding-right: 50px"
+              [min]="0"
+              [max]="timesteps.length - 1"
+              [step]="1"
+              [value]="index_time"
+              id="customRange3"
+              oninput=""
+              (input)="update_index_time($event)"
+            />
+          </div>
+          <div
+            style="padding-left: 10px; padding-right: 10px"
+            class="form-group col-md-2 col-xs-3"
           >
-            <svg
-              width="25px"
-              height="25px"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M2 6C2 4.11438 2 3.17157 2.58579 2.58579C3.17157 2 4.11438 2 6 2C7.88562 2 8.82843 2 9.41421 2.58579C10 3.17157 10 4.11438 10 6V18C10 19.8856 10 20.8284 9.41421 21.4142C8.82843 22 7.88562 22 6 22C4.11438 22 3.17157 22 2.58579 21.4142C2 20.8284 2 19.8856 2 18V6Z"
-                fill="#FFFFFF"
-              />
-              <path
-                d="M14 6C14 4.11438 14 3.17157 14.5858 2.58579C15.1716 2 16.1144 2 18 2C19.8856 2 20.8284 2 21.4142 2.58579C22 3.17157 22 4.11438 22 6V18C22 19.8856 22 20.8284 21.4142 21.4142C20.8284 22 19.8856 22 18 22C16.1144 22 15.1716 22 14.5858 21.4142C14 20.8284 14 19.8856 14 18V6Z"
-                fill="#FFFFFF"
-              />
-            </svg>
-          </button>
-
-          <button
-            style="max-height: 50px"
-            (click)="reset_view()"
-            type="button"
-            class="btn btn-danger"
-          >
-            <svg
-              width="25px"
-              height="25px"
-              viewBox="0 0 512 512"
-              version="1.1"
-              xmlns="http://www.w3.org/2000/svg"
-              xmlns:xlink="http://www.w3.org/1999/xlink"
-            >
-              <title>reset</title>
-              <g
-                id="Page-1"
-                stroke="none"
-                stroke-width="1"
-                fill="none"
-                fill-rule="evenodd"
+            <div class="btn-group">
+              <button
+                style="max-height: 50px"
+                (click)="start()"
+                type="button"
+                class="btn btn-success"
               >
-                <g
-                  id="Combined-Shape"
-                  fill="#FFFFFF"
-                  transform="translate(74.806872, 64.000000)"
+                <svg
+                  width="25px"
+                  height="25px"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
+                    d="M21.4086 9.35258C23.5305 10.5065 23.5305 13.4935 21.4086 14.6474L8.59662 21.6145C6.53435 22.736 4 21.2763 4 18.9671L4 5.0329C4 2.72368 6.53435 1.26402 8.59661 2.38548L21.4086 9.35258Z"
+                    fill="#FFFFFF"
+                  />
+                </svg>
+              </button>
+
+              <button
+                style="max-height: 50px"
+                (click)="pause()"
+                type="button"
+                class="btn btn-primary"
+              >
+                <svg
+                  width="25px"
+                  height="25px"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M2 6C2 4.11438 2 3.17157 2.58579 2.58579C3.17157 2 4.11438 2 6 2C7.88562 2 8.82843 2 9.41421 2.58579C10 3.17157 10 4.11438 10 6V18C10 19.8856 10 20.8284 9.41421 21.4142C8.82843 22 7.88562 22 6 22C4.11438 22 3.17157 22 2.58579 21.4142C2 20.8284 2 19.8856 2 18V6Z"
+                    fill="#FFFFFF"
+                  />
+                  <path
+                    d="M14 6C14 4.11438 14 3.17157 14.5858 2.58579C15.1716 2 16.1144 2 18 2C19.8856 2 20.8284 2 21.4142 2.58579C22 3.17157 22 4.11438 22 6V18C22 19.8856 22 20.8284 21.4142 21.4142C20.8284 22 19.8856 22 18 22C16.1144 22 15.1716 22 14.5858 21.4142C14 20.8284 14 19.8856 14 18V6Z"
+                    fill="#FFFFFF"
+                  />
+                </svg>
+              </button>
+
+              <button
+                style="max-height: 50px"
+                (click)="reset_view()"
+                type="button"
+                class="btn btn-danger"
+              >
+                <svg
+                  width="25px"
+                  height="25px"
+                  viewBox="0 0 512 512"
+                  version="1.1"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlns:xlink="http://www.w3.org/1999/xlink"
+                >
+                  <title>reset</title>
+
+                  <path
                     d="M351.859794,42.6666667 L351.859794,85.3333333 L283.193855,85.3303853 C319.271288,116.988529 341.381875,163.321355 341.339886,213.803851 C341.27474,291.98295 288.098183,360.121539 212.277591,379.179704 C136.456999,398.237869 57.3818117,363.341907 20.3580507,294.485411 C-16.6657103,225.628916 -2.17003698,140.420413 55.5397943,87.68 C63.6931909,100.652227 75.1888658,111.189929 88.8197943,118.186667 C59.4998648,141.873553 42.4797783,177.560832 42.5264609,215.253333 C43.5757012,285.194843 100.577082,341.341203 170.526461,341.333333 C234.598174,342.388718 289.235113,295.138227 297.4321,231.584253 C303.556287,184.101393 282.297007,138.84385 245.195596,112.637083 L245.193128,192 L202.526461,192 L202.526461,42.6666667 L351.859794,42.6666667 Z M127.859794,-1.42108547e-14 C151.423944,-1.42108547e-14 170.526461,19.1025173 170.526461,42.6666667 C170.526461,66.230816 151.423944,85.3333333 127.859794,85.3333333 C104.295645,85.3333333 85.1931276,66.230816 85.1931276,42.6666667 C85.1931276,19.1025173 104.295645,-1.42108547e-14 127.859794,-1.42108547e-14 Z"
+                    fill="#FFFFFF"
                   ></path>
-                </g>
-              </g>
-            </svg>
-          </button>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+
         </div>
+
+        <div class="d-flex flex-row justify-content-center">
+          <p>
+            Mean ratio: {{ mean_ratio | number : "1.0-3" }}, worst ratio
+            {{ worst_ratio | number : "1.0-2" }}, best ratio
+            {{ best_ratio | number : "1.0-3" }}, std ratio
+            {{ std_ratio | number : "1.0-2" }}
+          </p>
+        </div>
+
+        <div
+          class="d-flex  justify-content-center"
+          *ngFor="let element of changelog_display"
+        >
+          <c-alert
+            style="height: 15px"
+            [color]="element.color"
+            dismissible="false"
+            >{{ element.message }}</c-alert
+          >
+        </div>
+      </div>
     </div>
-        <div style="padding-left: 10px; padding-right: 10px" class="form-group col-md-auto col-xs-3">
-        <div>
-          <label for="typeNumber">Normal transition (ms)</label>
-          <input
-            min="500"
-            max="9000"
-            step="500"
-            type="number"
-            id="typeNumber"
-            [readOnly]="this.playing"
-            class="form-control"
-            [(ngModel)]="this.animation_duration"
-          />
-        </div>
-        </div>
-        <div style="padding-left: 10px; padding-right: 10px" class="form-group col-md-auto col-xs-3">
-        <div>
-          <label for="typeNumber">Change transition (ms)</label>
-          <input
-            min="6000"
-            max="20000"
-            step="2000"
-            type="number"
-            id="typeNumber"
-            [readOnly]="this.playing"
-            class="form-control"
-            [(ngModel)]="this.animation_duration_change"
-          />
-        </div>
-        </div>
-
-  </div>
-
-  <div class="d-flex flex-row justify-content-center">
-    <p>
-      Mean ratio: {{ mean_ratio | number : "1.0-3" }}, worst ratio
-      {{ worst_ratio | number : "1.0-2" }}, best ratio
-      {{ best_ratio | number : "1.0-3" }}, std ratio
-      {{ std_ratio | number : "1.0-2" }}
-    </p>
-  </div>
-
-  <div
-    class="d-flex flex-column justify-content-center"
-    *ngFor="let element of changelog_display"
-  >
-    <c-alert style="height: 15px" [color]="element.color" dismissible="false">{{
-      element.message
-    }}</c-alert>
-  </div>
-</div>
+  </mat-sidenav-content>
+</mat-sidenav-container>
