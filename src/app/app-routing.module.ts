@@ -8,11 +8,13 @@ import { HomeViewComponent } from './home-view/home-view.component';
 import { EditComponent } from './edit/edit.component';
 import { LoginPageComponent } from './login-page/login-page.component';
 import { UserListComponent } from './user-list/user-list.component';
+import { TreeMapViewDualComponent } from './tree-map-view-dual/tree-map-view-dual.component';
 
 const routes: Routes = [
   {path: 'tree-map-view', component: TreeMapViewComponent},
   {path: 'tree-map-view-amcharts', component: TreeMapViewAmchartsComponent},
   {path: 'tree-map-view-d3', component: TreeMapViewD3Component},
+  {path: 'tree-map-view-dual', component: TreeMapViewDualComponent},
   {path: 'datasets-viewer', component: DatasetsViewerComponent},
   {path: '', component: HomeViewComponent},
   {path: 'edit-treemap/:id', component: EditComponent},

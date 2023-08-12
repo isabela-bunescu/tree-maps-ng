@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import * as d3 from 'd3';
-import { DataFetcherService } from '../data-fetcher.service';
-import { IndexEntry } from '../index-entry';
-import { Changelog, hslToRgb, value_smart_print } from '../extras';
 import {
-  Change,
+  render_no_change,
+  render_static,
+  render_with_change,
+} from '../renderer';
+import {
   RectNode,
   TreeMapNode,
   data_to_rectangles,
@@ -12,68 +12,89 @@ import {
   ratio,
   raw_data_to_trees,
 } from '../tree-map-node';
-import { BuildTreeMap } from '../tree-map-node';
-import { Text } from '@visx/text';
-import { FormsModule } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import * as d3 from 'd3';
 import { fromEvent } from 'rxjs';
-import { interp_lin, render_no_change, render_static, render_with_change } from '../renderer';
-//import { MatSidenavModule } from '@angular/material/sidenav';
+import { DataFetcherService } from '../data-fetcher.service';
+import { IndexEntry } from '../index-entry';
+import { Changelog } from '../extras';
 
 @Component({
-  selector: 'app-tree-map-view-d3',
-  templateUrl: './tree-map-view-d3.component.html',
-  styleUrls: ['./tree-map-view-d3.component.css'],
+  selector: 'app-tree-map-view-dual',
+  templateUrl: './tree-map-view-dual.component.html',
+  styleUrls: ['./tree-map-view-dual.component.css'],
 })
-export class TreeMapViewD3Component {
+export class TreeMapViewDualComponent {
   public isLoaded = false; // is loaded flag
   public data: TreeMapNode[] = [];
-  public rectangles: RectNode[][] = [];
+  // rectangles
+  public rectangles_left: RectNode[][] = [];
+  public rectangles_right: RectNode[][] = [];
+  // time step description
   public timesteps = [0, 0];
   public time_min = 0;
   public time_max = 0;
   public time_step = 0;
   public index_time: number = 0;
   public index_time_prev: number = 0;
+  // timer data (for animation)
   public playing = false;
   public timer;
-  public selectedLayoutIndex: number = 0;
+  // layout data
+  public layout_index_right: number = 0;
+  public layout_index_left: number = 0;
   public Layouts: any[] = [];
   public selectedIndex: number = 0;
   public selectedValue: string = '';
   public Index: IndexEntry[] = [];
   public changelog_now: Changelog[][] = [];
-  public svg_handle;
-  public wait_multiple: number = 0;
   public animation_duration: number = 1000;
   public animation_duration_change: number = 6000;
   public changelog_display: any[] = [];
   public svg_height: number = 0;
   public svg_width: number = 0;
   public resizeSubscription: any;
-  public mean_ratio: number = 1;
-  public worst_ratio: number = 1;
-  public std_ratio: number = 1;
-  public best_ratio: number = 1;
+  public display_ratios: any = {
+    mean_left: 1,
+    mean_right: 1,
+    worst_left: 1,
+    worst_right: 1,
+    std_left: 1,
+    std_right: 1,
+    best_left: 1,
+    best_right: 1,
+  };
   public side_opened: boolean = true;
 
   /**
    * Compute statistical measures of the aspect ratios of the given rectangles.
-   * @param rectangles list of rectangles
+   * @param rectangles_left list of rectangles of the left viewport
+   * @param rectangles_right list of rectangles of the right viewport
    */
-  private update_aspect_ratios(rectangles: RectNode[]) {
-    let ratios: number[] = rectangles
+  private update_aspect_ratios(rectangles_left: RectNode[], rectangles_right: RectNode[]) {
+    let ratios: number[] = rectangles_left
       .map((el) => ratio(el.x1 - el.x0, el.y1 - el.y0))
       .filter((el) => !Number.isNaN(el) && Number.isFinite(el));
-    this.mean_ratio = ratios.reduce((pv, el) => el + pv, 0) / ratios.length;
-    this.worst_ratio = ratios.reduce((pv, el) => (el > pv ? el : pv), 1);
-    this.std_ratio = Math.sqrt(
-      ratios.reduce((pv, el) => Math.pow(el - this.mean_ratio, 2) + pv, 0) /
+    this.display_ratios.mean_left = ratios.reduce((pv, el) => el + pv, 0) / ratios.length;
+    this.display_ratios.worst_left = ratios.reduce((pv, el) => (el > pv ? el : pv), 1);
+    this.display_ratios.std_left = Math.sqrt(
+      ratios.reduce((pv, el) => Math.pow(el - this.display_ratios.mean_left, 2) + pv, 0) /
         (ratios.length - 1)
     );
-    this.best_ratio = ratios.reduce(
+    this.display_ratios.best_left = ratios.reduce(
+      (pv, el) => (el < pv ? el : pv),
+      Number.POSITIVE_INFINITY
+    );
+
+    ratios = rectangles_right
+      .map((el) => ratio(el.x1 - el.x0, el.y1 - el.y0))
+      .filter((el) => !Number.isNaN(el) && Number.isFinite(el));
+    this.display_ratios.mean_right = ratios.reduce((pv, el) => el + pv, 0) / ratios.length;
+    this.display_ratios.worst_right = ratios.reduce((pv, el) => (el > pv ? el : pv), 1);
+    this.display_ratios.std_right = Math.sqrt(
+      ratios.reduce((pv, el) => Math.pow(el - this.display_ratios.mean_right, 2) + pv, 0) /
+        (ratios.length - 1)
+    );
+    this.display_ratios.best_right = ratios.reduce(
       (pv, el) => (el < pv ? el : pv),
       Number.POSITIVE_INFINITY
     );
@@ -97,7 +118,7 @@ export class TreeMapViewD3Component {
         this.time_step = this.timesteps[1] - this.timesteps[0];
         this.index_time = +0;
 
-        this.update_to_new_layout(this.selectedLayoutIndex);
+        this.update_to_new_layout(this.layout_index_left, this.layout_index_right);
 
         this.isLoaded = true;
       });
@@ -116,14 +137,19 @@ export class TreeMapViewD3Component {
     this.playing = false;
     this.index_time = 0;
     this.index_time_prev = 0;
-    this.render(this.rectangles[this.index_time]);
+    this.render(this.index_time);
   }
 
-  public update_to_new_layout(event) {
-    let i: number = event;
-    [this.rectangles, this.changelog_now] = data_to_rectangles(
+  public update_to_new_layout(layout_left, layout_right) {
+    [this.rectangles_left, this.changelog_now] = data_to_rectangles(
       this.data,
-      this.Layouts[i].Name,
+      this.Layouts[layout_left].Name,
+      this.svg_width,
+      this.svg_height
+    );
+    [this.rectangles_right, this.changelog_now] = data_to_rectangles(
+      this.data,
+      this.Layouts[layout_right].Name,
       this.svg_width,
       this.svg_height
     );
@@ -131,17 +157,13 @@ export class TreeMapViewD3Component {
   }
 
   public start() {
-    this.wait_multiple = 0;
-
     if (!this.playing) {
       this.playing = true;
 
       let callback_timer = () => {
         let delay: number = 0;
 
-        //console.log(this.wait_multiple);
-
-        if (this.index_time+1 < this.timesteps.length) {
+        if (this.index_time + 1 < this.timesteps.length) {
           if (this.changelog_now[this.index_time].length == 0)
             delay = this.animation_duration;
           else delay = this.animation_duration_change;
@@ -174,8 +196,8 @@ export class TreeMapViewD3Component {
           );
 
           this.animate_new(
-            this.rectangles[this.index_time],
-            this.rectangles[this.index_time + 1],
+            this.index_time,
+            this.index_time + 1,
             this.changelog_now[this.index_time].length > 0
           );
 
@@ -203,26 +225,31 @@ export class TreeMapViewD3Component {
     this.index_time_prev = this.index_time;
     this.index_time = +event.target.value;
 
-    this.render(this.rectangles[this.index_time]);
+    this.render(this.index_time);
   }
 
   ngOnInit() {
     this.svg_height = Math.round(window.innerHeight * 0.8);
-    this.svg_width = window.innerWidth;
+    this.svg_width = window.innerWidth / 2 - 20;
 
-    this.svg_handle = d3.select('body').select('svg g');
-
+    // handle resize event
     let resizeObservable = fromEvent(window, 'resize');
     let resizeSubscription = resizeObservable.subscribe((evt) => {
       this.svg_height = Math.round(window.innerHeight * 0.8);
-      this.svg_width = window.innerWidth;
-      [this.rectangles, this.changelog_now] = data_to_rectangles(
+      this.svg_width = window.innerWidth / 2 - 20;
+      [this.rectangles_left, this.changelog_now] = data_to_rectangles(
         this.data,
-        this.Layouts[this.selectedLayoutIndex].Name,
+        this.Layouts[this.layout_index_left].Name,
         this.svg_width,
         this.svg_height
       );
-      if (!this.playing) this.render(this.rectangles[this.index_time]);
+      [this.rectangles_right, this.changelog_now] = data_to_rectangles(
+        this.data,
+        this.Layouts[this.layout_index_right].Name,
+        this.svg_width,
+        this.svg_height
+      );
+      if (!this.playing) this.render(this.index_time);
     });
 
     this.dfs.fetch_index().subscribe((dta) => {
@@ -238,62 +265,62 @@ export class TreeMapViewD3Component {
           this.time_step = this.timesteps[1] - this.timesteps[0];
           this.index_time = +0;
 
-          this.update_to_new_layout(this.selectedLayoutIndex);
+          this.update_to_new_layout(this.layout_index_left, this.layout_index_right);
 
           this.isLoaded = true;
         });
     });
   }
 
-  public animate_new_2(
-    rectangles_start: RectNode[],
-    rectangles_end: RectNode[]
-  ) {
-    this.update_aspect_ratios(rectangles_end);
-  }
-
   public animate_new(
-    rectangles_start: RectNode[],
-    rectangles_end: RectNode[],
+    time_index_start: number,
+    time_index_end: number,
     modification: boolean
   ) {
-    this.update_aspect_ratios(rectangles_end);
+    this.update_aspect_ratios(this.rectangles_left[time_index_end], this.rectangles_right[time_index_end]);
 
     let duration_this: number;
     if (modification) duration_this = this.animation_duration_change;
     else duration_this = this.animation_duration;
 
-    var g = this.svg_handle
-      .selectAll('.rect')
-      .data(rectangles_end)
-      .enter()
-      .append('g')
-      .classed('rect', true);
-
     if (modification == false) {
       render_no_change(
-        rectangles_start,
-        rectangles_end,
+        this.rectangles_left[time_index_end],
+        this.rectangles_left[time_index_end],
         duration_this,
         '#w1',
         'rel'
       );
-    }
-    else{
-      render_with_change(
-        rectangles_start,
-        rectangles_end,
+      render_no_change(
+        this.rectangles_right[time_index_end],
+        this.rectangles_right[time_index_end],
         duration_this,
-        '#w1');
+        '#w2',
+        'rel'
+      );
+    } else {
+      render_with_change(
+        this.rectangles_left[time_index_end],
+        this.rectangles_left[time_index_end],
+        duration_this,
+        '#w1'
+      );
+      render_with_change(
+        this.rectangles_right[time_index_end],
+        this.rectangles_right[time_index_end],
+        duration_this,
+        '#w2'
+      );
     }
   }
 
-  public render(rectangles: RectNode[]) {
+  public render(index: number) {
     //console.log(JSON.stringify(rectangles))
-    this.update_aspect_ratios(rectangles);
+    this.update_aspect_ratios(this.rectangles_left[index], this.rectangles_right[index]);
     let width = this.svg_width;
     let height = this.svg_height;
 
-    render_static(rectangles, '#w1');
+    render_static(this.rectangles_left[index], '#w1');
+    render_static(this.rectangles_right[index], '#w2');
   }
 }

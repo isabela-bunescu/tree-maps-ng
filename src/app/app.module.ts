@@ -23,6 +23,7 @@ import { UserListComponent } from './user-list/user-list.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatIconModule} from '@angular/material/icon';
+import { TreeMapViewDualComponent } from './tree-map-view-dual/tree-map-view-dual.component';
 
 @NgModule({
   declarations: [
@@ -34,7 +35,8 @@ import {MatIconModule} from '@angular/material/icon';
     HomeViewComponent,
     EditComponent,
     LoginPageComponent,
-    UserListComponent
+    UserListComponent,
+    TreeMapViewDualComponent
   ],
   imports: [
     BrowserModule,
