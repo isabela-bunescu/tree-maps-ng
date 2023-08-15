@@ -87,7 +87,6 @@ export class EditComponent {
   }
 
   public selectTime(event: any) {
-    console.log('EVENT ', event.target.value);
     this.selected_index = event.target.value;
     this.refresh();
   }
@@ -118,10 +117,81 @@ export class EditComponent {
     }
     return null;
   }
-  public add_node(parent: string, name: string, value: number, leaf: boolean) {
-    console.log(">>>",parent, name, value, leaf)
+  private add_node_to_three(
+    root: TreeMapNode,
+    parent_name: string,
+    name: string,
+    value: number
+  ) {
+    let node: TreeMapNode = {
+      name: root.name,
+      value: root.value,
+      hash: root.hash,
+      lim_min: root.lim_min,
+      lim_max: root.lim_max,
+      children: [],
+      leaf: root.leaf,
+    };
+
+    if (root.name == parent_name) {
+      console.log("ADDED")
+      node.children.push({
+        name: name,
+        value: value > 0 ? value : 0,
+        hash: '',
+        lim_min: 0,
+        lim_max: 0,
+        children: [],
+        leaf: value > 0,
+      } as TreeMapNode);
+    }
+    for (let c of root.children) {
+      let tmp = this.add_node_to_three(c, parent_name, name, value);
+      node.children.push(tmp as TreeMapNode);
+    }
+    return node;
   }
 
+  public add_node(
+    level: number,
+    parent: string,
+    name: string,
+    value: number,
+    leaf: boolean
+  ) {
+    console.log("Adding", name, leaf)
+    if (leaf) {
+      if (value <= 0 || name.length == 0) {
+        this.show_error = true;
+        this.message_error =
+          'Adding a leaf must have a nonzero value and the name must contain at least 1 character.';
+        return;
+      }
+
+      this.data[this.selected_index] = this.add_node_to_three(
+        this.data[this.selected_index],
+        parent,
+        name,
+        value
+      ) as TreeMapNode;
+    } else {
+      if (name.length == 0) {
+        this.show_error = true;
+        this.message_error =
+          'The name must contain at least 1 character.';
+        return;
+      }
+      for (let i = 0; i < this.timesteps.length; i++){
+        console.log(i);
+        this.data[i] = this.add_node_to_three(
+          this.data[i],
+          level == 0 ? this.data[i].name : parent,
+          name,
+          -1
+        ) as TreeMapNode;
+      }
+    }
+  }
 
   private rebuild_tree_without_node(name: string, root: TreeMapNode) {
     if (root.name == name) return null;
@@ -153,10 +223,13 @@ export class EditComponent {
       ) as TreeMapNode;
     } else {
       for (let i = 0; i < this.timesteps.length; i++)
+      {
         this.data[i] = this.rebuild_tree_without_node(
           name,
           this.data[i]
         ) as TreeMapNode;
+        this.data[i]
+      }
     }
   }
 

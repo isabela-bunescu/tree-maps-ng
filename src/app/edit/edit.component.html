@@ -177,7 +177,7 @@
                 <div class="p-2 flex-grow-1"></div>
 
                 <div class="p-2 btn-group">
-                  <button class="btn btn-success" (click)="add_node(node.level == 0? '' : node.item.name, variable.name, variable.value, node.item.leaf || node.item.children[0].leaf)">
+                  <button class="btn btn-success" (click)="add_node(node.level, node.item.name, variable.name, variable.value, node.item.leaf || node.item.children[0].leaf)">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       height="1em"

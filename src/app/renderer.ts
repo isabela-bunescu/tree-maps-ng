@@ -896,7 +896,7 @@ export function render_static(
       return (d.y1 - d.y0).toString() + '';
     })
     .on('mouseover', function (d, i: RectNode) {
-      console.log(id, d.clientX, d.clientY)
+
       tip
         .style('opacity', 1)
         .html(
