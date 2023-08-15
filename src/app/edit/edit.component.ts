@@ -118,7 +118,11 @@ export class EditComponent {
     }
     return null;
   }
-  public add_node(parent: string, name: string, vlaue: number) {}
+  public add_node(parent: string, name: string, value: number, leaf: boolean) {
+    console.log(">>>",parent, name, value, leaf)
+  }
+
+
   private rebuild_tree_without_node(name: string, root: TreeMapNode) {
     if (root.name == name) return null;
     let node: TreeMapNode = {

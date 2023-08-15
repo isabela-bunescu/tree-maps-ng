@@ -12,6 +12,7 @@ import {
   raw_data_to_trees,
 } from './tree-map-node';
 import { BuildTreeMap } from './tree-map-node';
+import { ColorScheme, HighlightType } from 'src/layout-settings';
 
 export function interp_lin(
   t: number,
@@ -23,8 +24,8 @@ export function interp_lin(
   return t >= t0 && t <= t1
     ? y0 + ((t - t0) / (t1 - t0)) * (y1 - y0)
     : t < t0
-      ? y0
-      : y1;
+    ? y0
+    : y1;
 } // ramp function ___/------
 export function interp_hat(
   t: number,
@@ -38,10 +39,10 @@ export function interp_hat(
   return t >= t0 && t <= t1
     ? y0 + ((t - t0) / (t1 - t0)) * (y1 - y0)
     : t > t1 && t <= t2
-      ? y1 + ((t - t1) / (t2 - t1)) * (y2 - y1)
-      : t < t0
-        ? y0
-        : y2;
+    ? y1 + ((t - t1) / (t2 - t1)) * (y2 - y1)
+    : t < t0
+    ? y0
+    : y2;
 } // ramp function ___/------
 
 export function render_no_change(
@@ -49,7 +50,8 @@ export function render_no_change(
   rectangles_end: RectNode[],
   duration: number,
   id: string,
-  highlight: string = 'relative'
+  highlight: HighlightType = HighlightType.Relative,
+  color_scheme: ColorScheme = ColorScheme.HSL
 ) {
   let creation_occurs = false; // flag that will be true if at least one node is created in this transition
   let deletion_occurs = false; // flag that will be true if at least one node gets deleted in this transition
@@ -60,16 +62,16 @@ export function render_no_change(
   });
 
   let reference_percentage: number = 0;
-  if (highlight == 'rel')
+  if (highlight == HighlightType.Relative)
     reference_percentage = rectangles_combined.reduce((pv, el) => {
       let tmp = Math.abs(el.end.value - el.start.value) / el.start.value;
       return tmp > pv ? tmp : pv;
     }, 0);
-  else if (highlight == 'abs') reference_percentage = 1;
+  else if (highlight == HighlightType.Absolute) reference_percentage = 1;
   else reference_percentage = 0;
 
   d3.select('body')
-    .select(id)
+    .select('#'+id)
     .select('svg')
     .selectAll('rect')
     .data(rectangles_combined)
@@ -78,7 +80,7 @@ export function render_no_change(
       return '#' + r.end.name;
     })
     .delay(10)
-    .tween('coloring', function (d) {
+    .tween('transition', function (d) {
       let currentAngle = d.start.color_h;
       let targetAngle = d.end.color_h;
 
@@ -89,7 +91,7 @@ export function render_no_change(
         targetAngle += 360;
       }
 
-      let ret: (t: number) => void = (t) => { };
+      let ret: (t: number) => void = (t) => {};
 
       {
         let t_start = 0;
@@ -102,13 +104,12 @@ export function render_no_change(
           //console.log(tmp);
           if (tmp > 0)
             tmp =
-              (100 - d.start.color_s) * tmp / reference_percentage +
+              ((100 - d.start.color_s) * tmp) / reference_percentage +
               d.start.color_s;
           if (tmp <= 0) {
-            tmp = d.start.color_s * tmp / reference_percentage + d.start.color_s;
-
+            tmp =
+              (d.start.color_s * tmp) / reference_percentage + d.start.color_s;
           }
-
         }
 
         ret = (t) => {
@@ -162,18 +163,20 @@ export function render_no_change(
             d.end.y1 - d.end.y0
           );
 
+          let color_str: string = "";
+          if (color_scheme == ColorScheme.HSL)
+            color_str = d3
+              .hsl(hue_angle, sat / 100,d.end.color_l / 100, d.start.color_a)
+              .toString();
+          else if (color_scheme == ColorScheme.LCH)
+            color_str = d3
+              .lch(d.end.color_l, (sat / 100) * 132, hue_angle, d.start.color_a)
+              .toString();
+
           d3.select(this)
             .attr(
               'fill',
-              'hsla(' +
-              hue_angle +
-              ', ' +
-              sat +
-              '%, ' +
-              d.end.color_l +
-              '%, ' +
-              d.start.color_a +
-              ')'
+              color_str
             )
             .attr('x', x.toString() + '')
             .attr('y', y.toString() + '')
@@ -193,11 +196,8 @@ export function render_no_change(
     })
     .duration(duration);
 
-
-
-
-
-  d3.select(id)
+  d3.select('body')
+    .select('#'+id)
     .select('svg')
     .selectAll('foreignObject')
     .data(rectangles_combined)
@@ -213,7 +213,7 @@ export function render_no_change(
         targetAngle += 360;
       }
 
-      let ret: (t: number) => void = (t) => { };
+      let ret: (t: number) => void = (t) => {};
 
       {
         let t_start = 0;
@@ -227,7 +227,12 @@ export function render_no_change(
           )
             display_text = '';
           else
-            display_text = d.end.name + ' - ' + value_smart_print(interp_lin(t, 0, 1, d.start.value, d.end.value));
+            display_text =
+              d.end.name +
+              ' - ' +
+              value_smart_print(
+                interp_lin(t, 0, 1, d.start.value, d.end.value)
+              );
           let x: number = interp_lin(
             t,
             t_start,
@@ -262,7 +267,7 @@ export function render_no_change(
             .attr('y', y.toString() + '')
             .attr('width', w.toString() + '')
             .attr('height', h.toString() + '')
-            .html("")
+            .html('')
             .append('xhtml:div')
             .html(display_text)
             .style('width', '100%')
@@ -295,10 +300,13 @@ export function render_no_change(
     .duration(duration);
 }
 
-export function render_with_change(rectangles_start: RectNode[],
+export function render_with_change(
+  rectangles_start: RectNode[],
   rectangles_end: RectNode[],
   duration: number,
-  id: string) {
+  id: string,
+  color_scheme: ColorScheme = ColorScheme.HSL
+) {
   let creation_occurs = false; // flag that will be true if at least one node is created in this transition
   let deletion_occurs = false; // flag that will be true if at least one node gets deleted in this transition
   let rectangles_combined: any[] = rectangles_start.map((el, i) => {
@@ -308,7 +316,7 @@ export function render_with_change(rectangles_start: RectNode[],
   });
 
   d3.select('body')
-    .select(id)
+    .select('#'+id)
     .select('svg')
     .selectAll('rect')
     .data(rectangles_combined)
@@ -333,7 +341,7 @@ export function render_with_change(rectangles_start: RectNode[],
         targetAngle += 360;
       }
 
-      let ret: (t: number) => void = (t) => { };
+      let ret: (t: number) => void = (t) => {};
 
       if (d.end.transition == Change.Delete) {
         //i_h = d3.interpolate(currentAngle, currentAngle);
@@ -346,9 +354,9 @@ export function render_with_change(rectangles_start: RectNode[],
           let lum: number = d.start.color_l; //(100-d.start.color_l)/2*Math.sin((t-t_start)/length*10*Math.PI - 0.5*Math.PI)+d.start.color_l+(100-d.start.color_l)/2;
           let sat: number =
             ((100 - d.start.color_s) / 2) *
-            Math.sin(
-              ((t - t_start) / length) * 10 * Math.PI - 0.5 * Math.PI
-            ) +
+              Math.sin(
+                ((t - t_start) / length) * 10 * Math.PI - 0.5 * Math.PI
+              ) +
             d.start.color_l +
             (100 - d.start.color_s) / 2;
           let alpha: number = interp_lin(
@@ -361,17 +369,20 @@ export function render_with_change(rectangles_start: RectNode[],
           //console.log("delete",t,lum,sat,alpha);
           //let lum = Math.round(interp_hat(t, 0, 1 / 6-1/20, 1 / 3-1/20, d.start.color_l, 0, 50));
           //let alpha: number = interp_lin(t, 1/6-1/20, 1 / 3-1/20, d.start.color_a, 0.0);
+
+          let color_str: string = "";
+          if (color_scheme == ColorScheme.HSL)
+            color_str = d3
+              .hsl(hue_angle, sat / 100,lum / 100, alpha)
+              .toString();
+          else if (color_scheme == ColorScheme.LCH)
+            color_str = d3
+              .lch(lum, (sat / 100) * 132, hue_angle, alpha)
+              .toString();
+
           d3.select(this).attr(
             'fill',
-            'hsla(' +
-            hue_angle +
-            ', ' +
-            sat +
-            '%, ' +
-            lum +
-            '%, ' +
-            alpha +
-            ')'
+            color_str
           );
         };
       } else if (d.end.transition == Change.Create) {
@@ -382,11 +393,11 @@ export function render_with_change(rectangles_start: RectNode[],
           let sat: number =
             t < 0.9
               ? ((100 - d.end.color_s) / 2) *
-              Math.sin(
-                ((t - t_start) / length) * 10 * Math.PI - 0.5 * Math.PI
-              ) +
-              d.end.color_s +
-              (100 - d.start.color_s) / 2
+                  Math.sin(
+                    ((t - t_start) / length) * 10 * Math.PI - 0.5 * Math.PI
+                  ) +
+                d.end.color_s +
+                (100 - d.start.color_s) / 2
               : d.end.color_s;
           let alpha: number = interp_lin(
             t,
@@ -396,18 +407,21 @@ export function render_with_change(rectangles_start: RectNode[],
             1.0
           );
           //console.log(hue_angle, sat, alpha)
+          let color_str: string = "";
+          if (color_scheme == ColorScheme.HSL)
+            color_str = d3
+              .hsl(hue_angle, sat / 100, d.end.color_l / 100, alpha)
+              .toString();
+          else if (color_scheme == ColorScheme.LCH)
+            color_str = d3
+              .lch(d.end.color_l, (sat / 100) * 132, hue_angle, alpha)
+              .toString();
+
+
           d3.select(this)
             .attr(
               'fill',
-              'hsla(' +
-              hue_angle +
-              ', ' +
-              sat +
-              '%, ' +
-              d.end.color_l +
-              '%, ' +
-              alpha +
-              ')'
+              color_str
             )
             .attr('x', d.end.x0.toString() + '')
             .attr('y', d.end.y0.toString() + '')
@@ -461,9 +475,9 @@ export function render_with_change(rectangles_start: RectNode[],
           else if (t >= t_start && t <= t_start + length / 3)
             sat =
               ((100 - d.start.color_s) / 2) *
-              Math.sin(
-                ((t - t_start) / length) * 3 * 5 * Math.PI - 0.5 * Math.PI
-              ) +
+                Math.sin(
+                  ((t - t_start) / length) * 3 * 5 * Math.PI - 0.5 * Math.PI
+                ) +
               d.start.color_l +
               (100 - d.start.color_s) / 2;
           //interp_hat(t, 1 / 3+1/20, 1/3 + 1 / 6, 2 / 3-1/20, d.start.color_s, 100, d.end.color_s);
@@ -478,18 +492,21 @@ export function render_with_change(rectangles_start: RectNode[],
               d.end.color_s
             );
           //console.log("move ",t,sat);
+
+          let color_str: string = "";
+          if (color_scheme == ColorScheme.HSL)
+            color_str = d3
+              .hsl(hue_angle, sat / 100, d.end.color_l / 100, d.start.color_a)
+              .toString();
+          else if (color_scheme == ColorScheme.LCH)
+            color_str = d3
+              .lch(d.end.color_l, (sat / 100) * 132, hue_angle, d.start.color_a)
+              .toString();
+
           d3.select(this)
             .attr(
               'fill',
-              'hsla(' +
-              hue_angle +
-              ', ' +
-              sat +
-              '%, ' +
-              d.end.color_l +
-              '%, ' +
-              d.start.color_a +
-              ')'
+              color_str
             )
             .attr('x', x.toString() + '')
             .attr('y', y.toString() + '')
@@ -540,18 +557,20 @@ export function render_with_change(rectangles_start: RectNode[],
             d.end.y1 - d.end.y0
           );
 
+          let color_str: string = "";
+          if (color_scheme == ColorScheme.HSL)
+            color_str = d3
+              .hsl(hue_angle, d.end.color_s / 100, d.end.color_l / 100, d.start.color_a)
+              .toString();
+          else if (color_scheme == ColorScheme.LCH)
+            color_str = d3
+              .lch(d.end.color_l, (d.end.color_s / 100) * 132, hue_angle, d.start.color_a)
+              .toString();
+
           d3.select(this)
             .attr(
               'fill',
-              'hsla(' +
-              hue_angle +
-              ', ' +
-              d.end.color_s +
-              '%, ' +
-              d.end.color_l +
-              '%, ' +
-              d.start.color_a +
-              ')'
+              color_str
             )
             .attr('x', x.toString() + '')
             .attr('y', y.toString() + '')
@@ -571,20 +590,19 @@ export function render_with_change(rectangles_start: RectNode[],
     })
     .duration(duration);
 
-
   //let width = this.svg_width;
   //let height = this.svg_height;
 
   let tip = d3
     .select('#playground')
     .append('div')
-    .attr('id', 'tt')
+    .attr('id', 'tt'+id)
     .style('position', 'absolute')
     .style('background-color', 'white')
     .style('color', 'black')
     .style('opacity', 0);
 
-  d3.select(id)
+  d3.select('#'+id)
     .select('svg')
     .selectAll('foreignObject')
     .data(rectangles_combined)
@@ -600,7 +618,7 @@ export function render_with_change(rectangles_start: RectNode[],
         targetAngle += 360;
       }
 
-      let ret: (t: number) => void = (t) => { };
+      let ret: (t: number) => void = (t) => {};
 
       if (d.end.transition == Change.Delete) {
         //i_h = d3.interpolate(currentAngle, currentAngle);
@@ -633,8 +651,7 @@ export function render_with_change(rectangles_start: RectNode[],
           Math.floor(d.end.x1 - d.end.x0) < 10
         )
           display_text = '';
-        else
-          display_text = d.end.name + ' - ' + value_smart_print(d.end.value);
+        else display_text = d.end.name + ' - ' + value_smart_print(d.end.value);
 
         ret = (t) => {
           //console.log(hue_angle, sat, alpha)
@@ -644,7 +661,7 @@ export function render_with_change(rectangles_start: RectNode[],
               .attr('y', d.end.y0.toString() + '')
               .attr('width', (d.end.x1 - d.end.x0).toString() + '')
               .attr('height', (d.end.y1 - d.end.y0).toString() + '')
-              .html("")
+              .html('')
               .append('xhtml:div')
               .style('opacity', d.end.color_a.toString())
               .style('width', '100%')
@@ -663,9 +680,7 @@ export function render_with_change(rectangles_start: RectNode[],
               .style('overflow-x', 'hidden')
               .style('font-size', '16px')
               .html(display_text);
-
           }
-
         };
       } else if (d.end.transition == Change.Move) {
         let t_start = 1 / 5;
@@ -677,8 +692,7 @@ export function render_with_change(rectangles_start: RectNode[],
           Math.floor(d.end.x1 - d.end.x0) < 10
         )
           display_text = '';
-        else
-          display_text = d.end.name + ' - ' + value_smart_print(d.end.value);
+        else display_text = d.end.name + ' - ' + value_smart_print(d.end.value);
 
         ret = (t) => {
           let x: number = interp_lin(
@@ -716,7 +730,7 @@ export function render_with_change(rectangles_start: RectNode[],
             .attr('y', y.toString() + '')
             .attr('width', w.toString() + '')
             .attr('height', h.toString() + '')
-            .html("")
+            .html('')
             .append('xhtml:div')
             .html(display_text)
             .style('width', '100%')
@@ -745,8 +759,7 @@ export function render_with_change(rectangles_start: RectNode[],
           Math.floor(d.end.x1 - d.end.x0) < 10
         )
           display_text = '';
-        else
-          display_text = d.end.name + ' - ' + value_smart_print(d.end.value);
+        else display_text = d.end.name + ' - ' + value_smart_print(d.end.value);
         ret = (t) => {
           let x: number = interp_lin(
             t,
@@ -782,7 +795,7 @@ export function render_with_change(rectangles_start: RectNode[],
             .attr('y', y.toString() + '')
             .attr('width', w.toString() + '')
             .attr('height', h.toString() + '')
-            .html("")
+            .html('')
             .append('xhtml:div')
             .style('width', '100%')
             .style('height', '100%')
@@ -814,30 +827,37 @@ export function render_with_change(rectangles_start: RectNode[],
     })
     .duration(duration);
 }
-export function render_static(rectangles: RectNode[], id: string) {
+export function render_static(
+  rectangles: RectNode[],
+  id: string,
+  color_scheme: ColorScheme = ColorScheme.HSL
+) {
+  d3.select('#'+id).selectAll('g').remove();
 
-  d3.select(id).selectAll('g').remove();
-
-  var g = d3.select(id).select('svg').selectAll('.rect')
+  var g = d3
+    .select('#'+id)
+    .select('svg')
+    .selectAll('.rect')
     .data(rectangles)
     .enter()
     .append('g');
 
   //.classed('rect', true)
 
-  d3.select('body').selectAll('#tt').remove();
+  d3.select('body').selectAll('#tt'+id).remove();
 
   let tip = d3
+    .select('body')
     .select('#playground')
     .append('div')
-    .attr('id', 'tt')
+    .attr('id', 'tt'+id)
     .style('position', 'absolute')
     .style('background-color', 'white')
     .style('color', 'black')
     .style('opacity', 0);
 
   g.append('rect')
-    //  .attr("id", (r) => { return "#" + r.name; })
+
     .attr('width', (r: RectNode) => {
       return (r.x1 - r.x0).toString() + '';
     })
@@ -851,16 +871,15 @@ export function render_static(rectangles: RectNode[], id: string) {
       return r.y0.toString() + '';
     })
     .attr('fill', (r: RectNode) => {
-      let rgb = hslToRgb(r.color_h, r.color_s, r.color_l);
-      return (
-        'rgba(' +
-        Math.round(rgb[0]) +
-        ', ' +
-        Math.round(rgb[1]) +
-        ', ' +
-        Math.round(rgb[2]) +
-        ', 1.0)'
-      );
+      if (color_scheme == ColorScheme.HSL)
+        return d3
+          .hsl(r.color_h, r.color_s / 100, r.color_l / 100, 1.0)
+          .toString();
+      else if (color_scheme == ColorScheme.LCH)
+        return d3
+          .lch(r.color_l, (r.color_s / 100) * 132, r.color_h, 1.0)
+          .toString();
+      else return '';
     });
 
   g.append('foreignObject')
@@ -877,16 +896,17 @@ export function render_static(rectangles: RectNode[], id: string) {
       return (d.y1 - d.y0).toString() + '';
     })
     .on('mouseover', function (d, i: RectNode) {
+      console.log(id, d.clientX, d.clientY)
       tip
         .style('opacity', 1)
         .html(
           i.name +
-          ' - ' +
-          value_smart_print(i.value) +
-          '<br />Ratio: ' +
-          ratio(i.x1 - i.x0, i.y1 - i.y0).toPrecision(6) +
-          '<br />Path: ' +
-          i.path?.join(' <span>&#10148;</span> ')
+            ' - ' +
+            value_smart_print(i.value) +
+            '<br />Ratio: ' +
+            ratio(i.x1 - i.x0, i.y1 - i.y0).toPrecision(6) +
+            '<br />Path: ' +
+            i.path?.join(' <span>&#10148;</span> ')
         )
         .style('left', (d.clientX - 25).toString() + 'px')
         .style('top', (d.clientY - 75).toString() + 'px');
@@ -894,7 +914,7 @@ export function render_static(rectangles: RectNode[], id: string) {
       //Makes the new div appear on hover
     })
     .on('mouseout', function (d, i) {
-      tip.style('opacity', 0);
+      tip.style('opacity', 0).html('');
     })
     .append('xhtml:div')
     .style('width', '100%') // (d) => { return ((d.x1 - d.x0)).toString() + "px"; })
@@ -918,5 +938,3 @@ export function render_static(rectangles: RectNode[], id: string) {
       else return d.name + ' - ' + value_smart_print(d.value);
     });
 }
-
-

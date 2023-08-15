@@ -28,12 +28,12 @@
           </td>
           <td style="vertical-align: middle">
             <div>
-              root
-              <span *ngIf="element.root" style="color: green">&#x2611;</span>
-              <span *ngIf="!element.root" style="color: red">&#x2611;</span>
-              &nbsp;&nbsp; edit
-              <span *ngIf="element.edit" style="color: green">&#x2611;</span>
-              <span *ngIf="!element.edit" style="color: red">&#x2611;</span>
+              root:
+              <span *ngIf="element.root" style="color: green"><!--&#x2611;--> yes </span>
+              <span *ngIf="!element.root" style="color: red"><!--&#x2612;-->no </span>
+              &nbsp;&nbsp; edit:
+              <span *ngIf="element.edit" style="color: green"><!--&#x2611;--> yes</span>
+              <span *ngIf="!element.edit" style="color: red"><!--&#x2612;--> no</span>
             </div>
           </td>
           <td style="vertical-align: middle">{{ element.creation_date }}</td>

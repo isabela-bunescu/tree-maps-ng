@@ -20,6 +20,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { fromEvent } from 'rxjs';
 import { interp_lin, render_no_change, render_static, render_with_change } from '../renderer';
+import { HighlightType } from 'src/layout-settings';
 //import { MatSidenavModule } from '@angular/material/sidenav';
 
 @Component({
@@ -276,7 +277,7 @@ export class TreeMapViewD3Component {
         rectangles_end,
         duration_this,
         '#w1',
-        'rel'
+        HighlightType.Relative
       );
     }
     else{

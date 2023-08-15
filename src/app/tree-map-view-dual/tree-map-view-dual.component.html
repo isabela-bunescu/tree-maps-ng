@@ -2,7 +2,7 @@
   <mat-icon>menu</mat-icon>
 </button>
 <mat-sidenav-container>
-  <mat-sidenav style="width: 300px" [(opened)]="side_opened">
+  <mat-sidenav style="width: 500px" [(opened)]="side_opened">
     <div class="d-flex flex-column justify-content-right">
       <div class="p-3">
         <label for="treemap-datasets"><b>Choose a dataset:</b> </label>
@@ -25,40 +25,118 @@
           {{ Index[selectedIndex].description }}
         </div>
       </div>
-      <div class="p-3">
+
+      <div class="row">
+      <div class="column" style="width: 250px;">
+      <div class="row" style="width: 240px;">
         <label *ngIf="isLoaded" for="treemap-layouts"
-          ><b>Choose the left layout:</b>
+          ><b>Left layout:</b>
         </label>
         <select
           *ngIf="isLoaded"
           class="form-control"
           id="treemap-layouts"
-          [(ngModel)]="layout_index_left"
-          (ngModelChange)="update_to_new_layout($event, layout_index_right)"
+          [(ngModel)]="layout_settings_left.layout_type"
+          (ngModelChange)="update_to_new_layout()"
         >
-          <option *ngFor="let c of Layouts; let i = index" [value]="i">
-            {{ c.DisplayName }}
+          <option *ngFor="let c of layout_settings_left.layout_names; let i = index" [value]="i">
+            {{ c }}
           </option>
         </select>
       </div>
-      <div class="p-3">
+      <div class="row"style="width: 240px;">
         <label *ngIf="isLoaded" for="treemap-layouts"
-          ><b>Choose the right layout:</b>
+          ><b>Left color scheme:</b>
         </label>
         <select
           *ngIf="isLoaded"
           class="form-control"
           id="treemap-layouts"
-          [(ngModel)]="layout_index_right"
-          (ngModelChange)="update_to_new_layout(layout_index_left, $event)"
+          [(ngModel)]="layout_settings_left.color_scheme"
+          (ngModelChange)="update_to_new_layout()"
         >
-          <option *ngFor="let c of Layouts; let i = index" [value]="i">
-            {{ c.DisplayName }}
+          <option *ngFor="let c of layout_settings_left.color_scheme_names; let i = index" [value]="i">
+            {{ c }}
           </option>
         </select>
       </div>
 
-      <div class="p-3"  *ngIf="isLoaded">
+      <div class="row" style="width: 240px;">
+        <label *ngIf="isLoaded" for="treemap-layouts"
+          ><b>Left highlighting:</b>
+        </label>
+        <select
+          *ngIf="isLoaded"
+          class="form-control"
+          id="treemap-layouts"
+          [(ngModel)]="layout_settings_left.highlight"
+          (ngModelChange)="update_to_new_layout()"
+        >
+          <option *ngFor="let c of layout_settings_left.highlight_names let i = index" [value]="i">
+            {{ c }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+      <div class="column" style="width: 250px;">
+
+      <div class="row" style="width: 240px;">
+        <label *ngIf="isLoaded" for="treemap-layouts"
+          ><b>Right layout:</b>
+        </label>
+        <select
+          *ngIf="isLoaded"
+          class="form-control"
+          id="treemap-layouts"
+          [(ngModel)]="layout_settings_right.layout_type"
+          (ngModelChange)="update_to_new_layout()"
+        >
+          <option *ngFor="let c of layout_settings_right.layout_names; let i = index" [value]="i">
+            {{ c }}
+          </option>
+        </select>
+      </div>
+
+      <div class="row" style="width: 240px;">
+        <label *ngIf="isLoaded" for="treemap-layouts"
+          ><b>Right color scheme:</b>
+        </label>
+        <select
+          *ngIf="isLoaded"
+          class="form-control"
+          id="treemap-layouts"
+          [(ngModel)]="layout_settings_right.color_scheme"
+          (ngModelChange)="update_to_new_layout()"
+        >
+          <option *ngFor="let c of layout_settings_right.color_scheme_names; let i = index" [value]="i">
+            {{ c }}
+          </option>
+        </select>
+      </div>
+
+      <div class="row" style="width: 240px;">
+        <label *ngIf="isLoaded" for="treemap-layouts"
+          ><b>Right highlighting:</b>
+        </label>
+        <select
+          *ngIf="isLoaded"
+          class="form-control"
+          id="treemap-layouts"
+          [(ngModel)]="layout_settings_right.highlight"
+          (ngModelChange)="update_to_new_layout()"
+        >
+          <option *ngFor="let c of layout_settings_right.highlight_names let i = index" [value]="i">
+            {{ c }}
+          </option>
+        </select>
+      </div>
+      </div>
+    </div>
+
+
+      <div class="row"  *ngIf="isLoaded">
+      <div class="column" style="width: 50%;">
         <label for="typeNumber">Normal transition (ms)</label>
         <input
           min="500"
@@ -71,7 +149,7 @@
           [(ngModel)]="this.animation_duration"
         />
       </div>
-      <div class = "p-3" *ngIf="isLoaded">
+      <div class = "column" style="width: 50%;">
         <label for="typeNumber">Change transition (ms)</label>
         <input
           min="6000"
@@ -85,16 +163,18 @@
         />
       </div>
     </div>
+    </div>
   </mat-sidenav>
   <mat-sidenav-content style="background-color: white">
     <div id="playground">
       <div class="d-flex">
+        <div style="width: 5px; max-width: 5px;"></div>
         <div id="w1" width="50vw" height="70vh">
           <svg id="window" [attr.width]="svg_width" [attr.height]="svg_height">
             <g></g>
           </svg>
         </div>
-
+        <div style="width: 10px; max-width: 10px;"></div>
         <div id="w2" width="50vw" height="70vh">
           <svg id="window" [attr.width]="svg_width" [attr.height]="svg_height">
             <g></g>

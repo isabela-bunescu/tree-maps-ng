@@ -17,6 +17,9 @@ import { fromEvent } from 'rxjs';
 import { DataFetcherService } from '../data-fetcher.service';
 import { IndexEntry } from '../index-entry';
 import { Changelog } from '../extras';
+import { LayoutSettings } from 'src/layout-settings';
+
+
 
 @Component({
   selector: 'app-tree-map-view-dual',
@@ -24,8 +27,7 @@ import { Changelog } from '../extras';
   styleUrls: ['./tree-map-view-dual.component.css'],
 })
 export class TreeMapViewDualComponent {
-  public isLoaded = false; // is loaded flag
-  public data: TreeMapNode[] = [];
+
   // rectangles
   public rectangles_left: RectNode[][] = [];
   public rectangles_right: RectNode[][] = [];
@@ -40,9 +42,11 @@ export class TreeMapViewDualComponent {
   public playing = false;
   public timer;
   // layout data
-  public layout_index_right: number = 0;
-  public layout_index_left: number = 0;
-  public Layouts: any[] = [];
+  public layout_settings_left: LayoutSettings = new LayoutSettings();
+  public layout_settings_right: LayoutSettings = new LayoutSettings();
+  // dataset
+  public isLoaded = false; // is loaded flag
+  public data: TreeMapNode[] = [];
   public selectedIndex: number = 0;
   public selectedValue: string = '';
   public Index: IndexEntry[] = [];
@@ -118,7 +122,7 @@ export class TreeMapViewDualComponent {
         this.time_step = this.timesteps[1] - this.timesteps[0];
         this.index_time = +0;
 
-        this.update_to_new_layout(this.layout_index_left, this.layout_index_right);
+        this.update_to_new_layout();
 
         this.isLoaded = true;
       });
@@ -127,7 +131,6 @@ export class TreeMapViewDualComponent {
   }
 
   constructor(private dfs: DataFetcherService) {
-    this.Layouts = get_layout_names();
     this.changelog_display = [];
   }
 
@@ -140,16 +143,16 @@ export class TreeMapViewDualComponent {
     this.render(this.index_time);
   }
 
-  public update_to_new_layout(layout_left, layout_right) {
+  public update_to_new_layout() {
     [this.rectangles_left, this.changelog_now] = data_to_rectangles(
       this.data,
-      this.Layouts[layout_left].Name,
+      this.layout_settings_left.layout_type,
       this.svg_width,
       this.svg_height
     );
     [this.rectangles_right, this.changelog_now] = data_to_rectangles(
       this.data,
-      this.Layouts[layout_right].Name,
+      this.layout_settings_right.layout_type,
       this.svg_width,
       this.svg_height
     );
@@ -239,13 +242,13 @@ export class TreeMapViewDualComponent {
       this.svg_width = window.innerWidth / 2 - 20;
       [this.rectangles_left, this.changelog_now] = data_to_rectangles(
         this.data,
-        this.Layouts[this.layout_index_left].Name,
+        this.layout_settings_left.layout_type,
         this.svg_width,
         this.svg_height
       );
       [this.rectangles_right, this.changelog_now] = data_to_rectangles(
         this.data,
-        this.Layouts[this.layout_index_right].Name,
+        this.layout_settings_right.layout_type,
         this.svg_width,
         this.svg_height
       );
@@ -265,7 +268,7 @@ export class TreeMapViewDualComponent {
           this.time_step = this.timesteps[1] - this.timesteps[0];
           this.index_time = +0;
 
-          this.update_to_new_layout(this.layout_index_left, this.layout_index_right);
+          this.update_to_new_layout();
 
           this.isLoaded = true;
         });
@@ -285,31 +288,35 @@ export class TreeMapViewDualComponent {
 
     if (modification == false) {
       render_no_change(
-        this.rectangles_left[time_index_end],
+        this.rectangles_left[time_index_start],
         this.rectangles_left[time_index_end],
         duration_this,
-        '#w1',
-        'rel'
+        'w1',
+        this.layout_settings_left.highlight,
+        this.layout_settings_left.color_scheme
       );
       render_no_change(
-        this.rectangles_right[time_index_end],
+        this.rectangles_right[time_index_start],
         this.rectangles_right[time_index_end],
         duration_this,
-        '#w2',
-        'rel'
+        'w2',
+        this.layout_settings_right.highlight,
+        this.layout_settings_right.color_scheme
       );
     } else {
       render_with_change(
-        this.rectangles_left[time_index_end],
+        this.rectangles_left[time_index_start],
         this.rectangles_left[time_index_end],
         duration_this,
-        '#w1'
+        'w1',
+        this.layout_settings_left.color_scheme
       );
       render_with_change(
-        this.rectangles_right[time_index_end],
+        this.rectangles_right[time_index_start],
         this.rectangles_right[time_index_end],
         duration_this,
-        '#w2'
+        'w2',
+        this.layout_settings_right.color_scheme
       );
     }
   }
@@ -320,7 +327,7 @@ export class TreeMapViewDualComponent {
     let width = this.svg_width;
     let height = this.svg_height;
 
-    render_static(this.rectangles_left[index], '#w1');
-    render_static(this.rectangles_right[index], '#w2');
+    render_static(this.rectangles_left[index], 'w1', this.layout_settings_left.color_scheme);
+    render_static(this.rectangles_right[index], 'w2', this.layout_settings_right.color_scheme);
   }
 }

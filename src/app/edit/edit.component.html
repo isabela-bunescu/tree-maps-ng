@@ -84,8 +84,8 @@
       </select>
       <div style="padding-top: 32px">
         <ul class="list-group list-group-root">
-          <ng-template #recursiveList let-list>
-            <ng-container *ngFor="let item of list">
+          <ng-template #recursiveList let-node>
+            <ng-container *ngFor="let item of node.item.children">
               <li class="list-group-item" *ngIf="shown.has(item.name)">
                 <div class="d-flex d-flex-row">
                   <div
@@ -153,28 +153,31 @@
                   <ng-container
                     *ngTemplateOutlet="
                       recursiveList;
-                      context: { $implicit: item.children }
+                      context: { $implicit: {item: item, level: item.level+1}}
                     "
                   ></ng-container>
                 </ul>
               </li>
-            </ng-container>
-            <li class="list-group-item">
-              <div class="d-flex d-flex-row">
+
+            </ng-container >
+
+            <li class="list-group-item" *ngIf="!node.item.leaf && shown.has(node.item.children[0].name)">
+              <div *ngIf="{ name: '', value: 0.0} as variable" class="d-flex d-flex-row">
                 <div class="p-2" style="width: 100px">
-                  <input type="name" class="form-control" />
+                  <input type="name" class="form-control" [(ngModel)]="variable.name" />
                 </div>
                 <div class="p-2">
                   <input
                     type="name"
                     class="form-control"
-                    *ngIf="list[0].leaf"
+                    [(ngModel)]="variable.value"
+                    *ngIf="node.item.children[0].leaf"
                   />
                 </div>
                 <div class="p-2 flex-grow-1"></div>
 
                 <div class="p-2 btn-group">
-                  <button class="btn btn-success" (click)="add_node('', '', 0)">
+                  <button class="btn btn-success" (click)="add_node(node.level == 0? '' : node.item.name, variable.name, variable.value, node.item.leaf || node.item.children[0].leaf)">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       height="1em"
@@ -194,12 +197,14 @@
                 </div>
               </div>
             </li>
+
+
           </ng-template>
 
           <ng-container
             *ngTemplateOutlet="
               recursiveList;
-              context: { $implicit: data[selected_index].children }
+              context: { $implicit: {item: data[selected_index], level: +0} }
             "
           ></ng-container>
         </ul>

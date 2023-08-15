@@ -71,14 +71,14 @@
     </div>
   </mat-sidenav>
   <mat-sidenav-content style="background-color: white">
-    <div id="playground">
-      <div>
+    <div >
+      <div id="playground">
         <div id="w1" width="100vw" height="70vh">
           <svg id="window" [attr.width]="svg_width" [attr.height]="svg_height">
             <g></g>
           </svg>
         </div>
-
+      </div>
         <div *ngIf="!isLoaded" class="d-flex justify-content-center">
           <div class="spinner-border text-primary" role="status">
             <span class="sr-only"></span>
@@ -207,7 +207,7 @@
             >{{ element.message }}</c-alert
           >
         </div>
-      </div>
+
     </div>
   </mat-sidenav-content>
 </mat-sidenav-container>
