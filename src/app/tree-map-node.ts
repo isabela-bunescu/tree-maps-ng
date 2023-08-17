@@ -15,6 +15,7 @@ export enum Change {
   Create = 2,
   Delete = 3
 }
+
 export interface TreeMapNode {
   name: string,
   value: number,

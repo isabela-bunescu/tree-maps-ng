@@ -5,6 +5,7 @@ import { IndexEntry } from '../index-entry';
 import { RectNode, TreeMapNode, raw_data_to_trees } from '../tree-map-node';
 import { value_smart_print } from '../extras';
 import { NONE_TYPE } from '@angular/compiler';
+import { TreeMap } from '@amcharts/amcharts4/charts';
 
 @Component({
   selector: 'app-edit',
@@ -71,6 +72,44 @@ export class EditComponent {
       } else this.shown.add(c.name);
   }
 
+  private prepare_upload(root: TreeMapNode): any{
+    if(root.leaf)
+      return {name: root.name, value: root.value};
+    else{
+      let obj = {name: root.name, children: new Array<any>()};
+      for(let i = 0; i < root.children.length; i++){
+        obj.children.push(this.prepare_upload(root.children[i]));
+      }
+      return obj;
+    }
+  }
+  public saveData(){
+    let data: any[] = [];
+    for(let i = 0; i < this.data.length; i++){
+      data.push({time: this.data[i].name, children: this.data[i].children.map(el => this.prepare_upload(el))});
+    }
+
+    this.dfs.put_data(this.id,  JSON.stringify(data)).subscribe({
+      next: (data) => {
+        if (data.success) {
+          this.message_success = 'Upload successful';
+          this.show_success = true;
+        }
+        else{
+          this.message_error =
+          'Error while uploading JSON: ' + JSON.stringify(data.message);
+        this.show_error = true;
+        }
+      },
+      error: (error) => {
+        //this.errorMessage = error.message;
+        this.message_error =
+          'Error while uploading JSON: ' + JSON.stringify(error);
+        this.show_error = true;
+      },
+    });
+  }
+
   public saveIndex() {
     console.log('Saving', this.Index);
     this.dfs.put_index(this.Index).subscribe({
@@ -102,8 +141,7 @@ export class EditComponent {
 
   public change_node_value(name, event) {
     console.log(name, event.target.value);
-    let index_stack: number[] = [0];
-    let level: number = 0;
+    this.data[this.selected_index] = this.update_node_value(this.data[this.selected_index], name, +event.target.value as number);
   }
 
   private find_node(name: string, root: TreeMapNode) {
@@ -117,6 +155,34 @@ export class EditComponent {
     }
     return null;
   }
+
+  private update_node_value(
+    root: TreeMapNode,
+    name: string,
+    value: number
+  ) {
+    let node: TreeMapNode = {
+      name: root.name,
+      value: root.value,
+      hash: root.hash,
+      lim_min: root.lim_min,
+      lim_max: root.lim_max,
+      children: [],
+      leaf: root.leaf,
+    };
+
+    if(name == root.name && root.leaf){
+      node.value = value;
+    console.log(node.value);
+    }
+
+    for (let c of root.children) {
+      let tmp = this.update_node_value(c, name, value);
+      node.children.push(tmp as TreeMapNode);
+    }
+    return node;
+  }
+
   private add_node_to_three(
     root: TreeMapNode,
     parent_name: string,
@@ -134,7 +200,7 @@ export class EditComponent {
     };
 
     if (root.name == parent_name) {
-      console.log("ADDED")
+
       node.children.push({
         name: name,
         value: value > 0 ? value : 0,
