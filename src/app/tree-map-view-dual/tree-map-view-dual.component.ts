@@ -121,6 +121,8 @@ export class TreeMapViewDualComponent {
         this.time_max = this.timesteps[this.timesteps.length - 1];
         this.time_step = this.timesteps[1] - this.timesteps[0];
         this.index_time = +0;
+        this.layout_settings_left.reference_tree_time = this.time_min;
+        this.layout_settings_right.reference_tree_time = this.time_min;
 
         this.update_to_new_layout();
 
@@ -148,13 +150,15 @@ export class TreeMapViewDualComponent {
       this.data,
       this.layout_settings_left.layout_type,
       this.svg_width,
-      this.svg_height
+      this.svg_height,
+      this.timesteps.indexOf(this.layout_settings_left.reference_tree_time)
     );
     [this.rectangles_right, this.changelog_now] = data_to_rectangles(
       this.data,
       this.layout_settings_right.layout_type,
       this.svg_width,
-      this.svg_height
+      this.svg_height,
+      this.timesteps.indexOf(this.layout_settings_right.reference_tree_time)
     );
     this.reset_view();
   }
@@ -244,13 +248,15 @@ export class TreeMapViewDualComponent {
         this.data,
         this.layout_settings_left.layout_type,
         this.svg_width,
-        this.svg_height
+        this.svg_height,
+        this.timesteps.indexOf(this.layout_settings_left.reference_tree_time)
       );
       [this.rectangles_right, this.changelog_now] = data_to_rectangles(
         this.data,
         this.layout_settings_right.layout_type,
         this.svg_width,
-        this.svg_height
+        this.svg_height,
+        this.timesteps.indexOf(this.layout_settings_right.reference_tree_time)
       );
       if (!this.playing) this.render(this.index_time);
     });
@@ -267,6 +273,8 @@ export class TreeMapViewDualComponent {
           this.time_max = this.timesteps[this.timesteps.length - 1];
           this.time_step = this.timesteps[1] - this.timesteps[0];
           this.index_time = +0;
+          this.layout_settings_left.reference_tree_time = this.time_min;
+          this.layout_settings_right.reference_tree_time = this.time_min;
 
           this.update_to_new_layout();
 

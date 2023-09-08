@@ -232,7 +232,7 @@ export function BuildSpiralCont(
       if (ascending) return a.value - b.value;
       else return b.value - a.value;
     });
-
+  nodes_ref=nodes_ref.concat(nodes.filter((el) => {return !nodes_ref.some((e2) => e2.name==el.name); }));
   //var node: TreeMapNode;
 
   var newX0 = x0;

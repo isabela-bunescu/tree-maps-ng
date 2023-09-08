@@ -19,8 +19,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { fromEvent } from 'rxjs';
-import { interp_lin, render_no_change, render_static, render_with_change } from '../renderer';
-import { HighlightType } from 'src/layout-settings';
+import {
+  interp_lin,
+  render_no_change,
+  render_static,
+  render_with_change,
+} from '../renderer';
+import { HighlightType, LayoutSettings } from 'src/layout-settings';
 //import { MatSidenavModule } from '@angular/material/sidenav';
 
 @Component({
@@ -29,52 +34,82 @@ import { HighlightType } from 'src/layout-settings';
   styleUrls: ['./tree-map-view-d3.component.css'],
 })
 export class TreeMapViewD3Component {
-  public isLoaded = false; // is loaded flag
-  public data: TreeMapNode[] = [];
-  public rectangles: RectNode[][] = [];
+  // rectangles
+  public rectangles_left: RectNode[][] = [];
+  // time step description
   public timesteps = [0, 0];
   public time_min = 0;
   public time_max = 0;
   public time_step = 0;
   public index_time: number = 0;
   public index_time_prev: number = 0;
+  // timer data (for animation)
   public playing = false;
   public timer;
-  public selectedLayoutIndex: number = 0;
-  public Layouts: any[] = [];
+  // layout data
+  public layout_settings_left: LayoutSettings = new LayoutSettings();
+
+  // dataset
+  public isLoaded = false; // is loaded flag
+  public data: TreeMapNode[] = [];
   public selectedIndex: number = 0;
   public selectedValue: string = '';
   public Index: IndexEntry[] = [];
   public changelog_now: Changelog[][] = [];
-  public svg_handle;
-  public wait_multiple: number = 0;
   public animation_duration: number = 1000;
   public animation_duration_change: number = 6000;
   public changelog_display: any[] = [];
   public svg_height: number = 0;
   public svg_width: number = 0;
   public resizeSubscription: any;
-  public mean_ratio: number = 1;
-  public worst_ratio: number = 1;
-  public std_ratio: number = 1;
-  public best_ratio: number = 1;
+  public display_ratios: any = {
+    mean_left: 1,
+    mean_right: 1,
+    weighted_left: 1,
+    weighted_right: 1,
+    worst_left: 1,
+    worst_right: 1,
+    std_left: 1,
+    std_right: 1,
+    best_left: 1,
+    best_right: 1,
+    not_showing_left: 0,
+    not_showing_right: 0
+  };
   public side_opened: boolean = true;
 
   /**
    * Compute statistical measures of the aspect ratios of the given rectangles.
-   * @param rectangles list of rectangles
+   * @param rectangles_left list of rectangles of the left viewport
+   * @param rectangles_right list of rectangles of the right viewport
    */
-  private update_aspect_ratios(rectangles: RectNode[]) {
-    let ratios: number[] = rectangles
+  private update_aspect_ratios(rectangles_left: RectNode[]) {
+    let ratios: number[] = rectangles_left
       .map((el) => ratio(el.x1 - el.x0, el.y1 - el.y0))
       .filter((el) => !Number.isNaN(el) && Number.isFinite(el));
-    this.mean_ratio = ratios.reduce((pv, el) => el + pv, 0) / ratios.length;
-    this.worst_ratio = ratios.reduce((pv, el) => (el > pv ? el : pv), 1);
-    this.std_ratio = Math.sqrt(
-      ratios.reduce((pv, el) => Math.pow(el - this.mean_ratio, 2) + pv, 0) /
+    this.display_ratios.not_showing_left = rectangles_left
+      .map((el) => ratio(el.x1 - el.x0, el.y1 - el.y0))
+      .filter((el) => Number.isNaN(el) || !Number.isFinite(el)).length;
+    this.display_ratios.mean_left =
+      ratios.reduce((pv, el) => el + pv, 0) / ratios.length;
+    this.display_ratios.weighted_left =
+      rectangles_left.reduce((pv, el) => {
+        let r = ratio(el.x1 - el.x0, el.y1 - el.y0);
+        if (!Number.isFinite(r) || Number.isNaN(r)) r = 0;
+        return el.value * r + pv;
+      }, 0) / rectangles_left.reduce((pv, el) => el.value + pv, 0);
+    this.display_ratios.worst_left = ratios.reduce(
+      (pv, el) => (el > pv ? el : pv),
+      1
+    );
+    this.display_ratios.std_left = Math.sqrt(
+      ratios.reduce(
+        (pv, el) => Math.pow(el - this.display_ratios.mean_left, 2) + pv,
+        0
+      ) /
         (ratios.length - 1)
     );
-    this.best_ratio = ratios.reduce(
+    this.display_ratios.best_left = ratios.reduce(
       (pv, el) => (el < pv ? el : pv),
       Number.POSITIVE_INFINITY
     );
@@ -97,8 +132,9 @@ export class TreeMapViewD3Component {
         this.time_max = this.timesteps[this.timesteps.length - 1];
         this.time_step = this.timesteps[1] - this.timesteps[0];
         this.index_time = +0;
+        this.layout_settings_left.reference_tree_time = this.time_min;
 
-        this.update_to_new_layout(this.selectedLayoutIndex);
+        this.update_to_new_layout();
 
         this.isLoaded = true;
       });
@@ -107,7 +143,6 @@ export class TreeMapViewD3Component {
   }
 
   constructor(private dfs: DataFetcherService) {
-    this.Layouts = get_layout_names();
     this.changelog_display = [];
   }
 
@@ -117,32 +152,28 @@ export class TreeMapViewD3Component {
     this.playing = false;
     this.index_time = 0;
     this.index_time_prev = 0;
-    this.render(this.rectangles[this.index_time]);
+    this.render(this.index_time);
   }
 
-  public update_to_new_layout(event) {
-    let i: number = event;
-    [this.rectangles, this.changelog_now] = data_to_rectangles(
+  public update_to_new_layout() {
+    [this.rectangles_left, this.changelog_now] = data_to_rectangles(
       this.data,
-      this.Layouts[i].Name,
+      this.layout_settings_left.layout_type,
       this.svg_width,
-      this.svg_height
+      this.svg_height,
+      this.timesteps.indexOf(this.layout_settings_left.reference_tree_time)
     );
     this.reset_view();
   }
 
   public start() {
-    this.wait_multiple = 0;
-
     if (!this.playing) {
       this.playing = true;
 
       let callback_timer = () => {
         let delay: number = 0;
 
-        //console.log(this.wait_multiple);
-
-        if (this.index_time+1 < this.timesteps.length) {
+        if (this.index_time + 1 < this.timesteps.length) {
           if (this.changelog_now[this.index_time].length == 0)
             delay = this.animation_duration;
           else delay = this.animation_duration_change;
@@ -175,8 +206,8 @@ export class TreeMapViewD3Component {
           );
 
           this.animate_new(
-            this.rectangles[this.index_time],
-            this.rectangles[this.index_time + 1],
+            this.index_time,
+            this.index_time + 1,
             this.changelog_now[this.index_time].length > 0
           );
 
@@ -204,26 +235,27 @@ export class TreeMapViewD3Component {
     this.index_time_prev = this.index_time;
     this.index_time = +event.target.value;
 
-    this.render(this.rectangles[this.index_time]);
+    this.render(this.index_time);
   }
 
   ngOnInit() {
     this.svg_height = Math.round(window.innerHeight * 0.8);
-    this.svg_width = window.innerWidth;
+    this.svg_width = window.innerWidth - 20;
 
-    this.svg_handle = d3.select('body').select('svg g');
-
+    // handle resize event
     let resizeObservable = fromEvent(window, 'resize');
     let resizeSubscription = resizeObservable.subscribe((evt) => {
       this.svg_height = Math.round(window.innerHeight * 0.8);
-      this.svg_width = window.innerWidth;
-      [this.rectangles, this.changelog_now] = data_to_rectangles(
+      this.svg_width = window.innerWidth - 20;
+      [this.rectangles_left, this.changelog_now] = data_to_rectangles(
         this.data,
-        this.Layouts[this.selectedLayoutIndex].Name,
+        this.layout_settings_left.layout_type,
         this.svg_width,
-        this.svg_height
+        this.svg_height,
+        this.timesteps.indexOf(this.layout_settings_left.reference_tree_time)
       );
-      if (!this.playing) this.render(this.rectangles[this.index_time]);
+
+      if (!this.playing) this.render(this.index_time);
     });
 
     this.dfs.fetch_index().subscribe((dta) => {
@@ -238,63 +270,56 @@ export class TreeMapViewD3Component {
           this.time_max = this.timesteps[this.timesteps.length - 1];
           this.time_step = this.timesteps[1] - this.timesteps[0];
           this.index_time = +0;
+          this.layout_settings_left.reference_tree_time = this.time_min;
 
-          this.update_to_new_layout(this.selectedLayoutIndex);
+          this.update_to_new_layout();
 
           this.isLoaded = true;
         });
     });
   }
 
-  public animate_new_2(
-    rectangles_start: RectNode[],
-    rectangles_end: RectNode[]
-  ) {
-    this.update_aspect_ratios(rectangles_end);
-  }
-
   public animate_new(
-    rectangles_start: RectNode[],
-    rectangles_end: RectNode[],
+    time_index_start: number,
+    time_index_end: number,
     modification: boolean
   ) {
-    this.update_aspect_ratios(rectangles_end);
+    this.update_aspect_ratios(this.rectangles_left[time_index_end]);
 
     let duration_this: number;
     if (modification) duration_this = this.animation_duration_change;
     else duration_this = this.animation_duration;
 
-    var g = this.svg_handle
-      .selectAll('.rect')
-      .data(rectangles_end)
-      .enter()
-      .append('g')
-      .classed('rect', true);
-
     if (modification == false) {
       render_no_change(
-        rectangles_start,
-        rectangles_end,
+        this.rectangles_left[time_index_start],
+        this.rectangles_left[time_index_end],
         duration_this,
-        '#w1',
-        HighlightType.Relative
+        'w1',
+        this.layout_settings_left.highlight,
+        this.layout_settings_left.color_scheme
       );
-    }
-    else{
+    } else {
       render_with_change(
-        rectangles_start,
-        rectangles_end,
+        this.rectangles_left[time_index_start],
+        this.rectangles_left[time_index_end],
         duration_this,
-        '#w1');
+        'w1',
+        this.layout_settings_left.color_scheme
+      );
     }
   }
 
-  public render(rectangles: RectNode[]) {
+  public render(index: number) {
     //console.log(JSON.stringify(rectangles))
-    this.update_aspect_ratios(rectangles);
+    this.update_aspect_ratios(this.rectangles_left[index]);
     let width = this.svg_width;
     let height = this.svg_height;
 
-    render_static(rectangles, '#w1');
+    render_static(
+      this.rectangles_left[index],
+      'w1',
+      this.layout_settings_left.color_scheme
+    );
   }
 }

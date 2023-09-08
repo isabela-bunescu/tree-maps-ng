@@ -21,10 +21,13 @@ export enum HighlightType{
   Absolute = 2
 }
 
+
+
 export class LayoutSettings {
   public layout_type: number = 0;
   public color_scheme: ColorScheme = ColorScheme.HSL;
   public highlight: HighlightType = 1;
+  public reference_tree_time: number = 0;
 
   readonly color_scheme_names: string[] = ['HSL', 'LCH'];
 

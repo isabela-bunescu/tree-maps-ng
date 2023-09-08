@@ -191,7 +191,12 @@ export function get_layout_names(): any[] {
  * @param layout layout type
  * @returns
  */
-export function data_to_rectangles(trees: TreeMapNode[], layout: LayoutType, width: number, height: number): [RectNode[][], Changelog[][]] {
+export function data_to_rectangles(trees: TreeMapNode[], layout: LayoutType, width: number, height: number, reference_tree_index: number = 0): [RectNode[][], Changelog[][]] {
+
+  if(reference_tree_index < 0)
+    reference_tree_index = 0;
+  if(reference_tree_index >= trees.length)
+    reference_tree_index = trees.length;
 
   let changelogs: any[] = [];
   console.log(trees);
@@ -207,23 +212,23 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: LayoutType, wid
   // build treemap and get list of names
   for (let i = 0; i < trees.length; ++i) {
     if (layout == LayoutType.SQ_MAX)
-      rectangles.push(BuildSquarify(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, x0r: 0, x1r: width, y0r: 0, y1r: height, cmin: 0, cmax: 1 }, "max"));
+      rectangles.push(BuildSquarify(trees[i], trees[reference_tree_index], { x0: 0, x1: width, y0: 0, y1: height, x0r: 0, x1r: width, y0r: 0, y1r: height, cmin: 0, cmax: 1 }, "max"));
     if (layout == LayoutType.SQ_MEAN)
-      rectangles.push(BuildSquarify(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, x0r: 0, x1r: width, y0r: 0, y1r: height, cmin: 0, cmax: 1 }, "mean"));
+      rectangles.push(BuildSquarify(trees[i], trees[reference_tree_index], { x0: 0, x1: width, y0: 0, y1: height, x0r: 0, x1r: width, y0r: 0, y1r: height, cmin: 0, cmax: 1 }, "mean"));
     if (layout == LayoutType.SD_H)
-      rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, slice: 1, cmin: 0, cmax: 1 }));
+      rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[reference_tree_index], { x0: 0, x1: width, y0: 0, y1: height, slice: 1, cmin: 0, cmax: 1 }));
     if (layout == LayoutType.SD_V)
-      rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, slice: 0, cmin: 0, cmax: 1 }));
+      rectangles.push(SliceAndDiceTreeMapCont(trees[i], trees[reference_tree_index], { x0: 0, x1: width, y0: 0, y1: height, slice: 0, cmin: 0, cmax: 1 }));
     if (layout == LayoutType.SD_A)
-      rectangles.push(SliceAndDiceAutoCont(trees[i], trees[0], { x0: 0, x1: width, y0: 0, y1: height, x0r: 0, x1r: width, y0r: 0, y1r: height, slice: 0, cmin: 0, cmax: 1 }));
+      rectangles.push(SliceAndDiceAutoCont(trees[i], trees[reference_tree_index], { x0: 0, x1: width, y0: 0, y1: height, x0r: 0, x1r: width, y0r: 0, y1r: height, slice: 0, cmin: 0, cmax: 1 }));
     if (layout == LayoutType.SP_ASC)
       rectangles.push(BuildSpiral(trees[i], 0, width, 0, height, 0, 1, true));
     if (layout == LayoutType.SP_DES)
       rectangles.push(BuildSpiral(trees[i], 0, width, 0, height, 0, 1, false));
     if (layout == LayoutType.SP_ASC_CONT)
-      rectangles.push(BuildSpiralCont(trees[i], trees[0], 0, width, 0, height, 0, 1, true, 0, width, 0, height));
+      rectangles.push(BuildSpiralCont(trees[i], trees[reference_tree_index], 0, width, 0, height, 0, 1, true, 0, width, 0, height));
     if (layout == LayoutType.SP_DES_CONT)
-      rectangles.push(BuildSpiralCont(trees[i], trees[0], 0, width, 0, height, 0, 1, false, 0, width, 0, height));
+      rectangles.push(BuildSpiralCont(trees[i], trees[reference_tree_index], 0, width, 0, height, 0, 1, false, 0, width, 0, height));
     //rectangles.push(BuildTreeMap(trees[i], "", { x0: 0, x1: 100, y0: 0, y1: 100, slice: 0 }));
     rectangles[i].map(el => { unique_names.add(el.name); });
   }
