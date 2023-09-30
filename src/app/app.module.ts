@@ -1,3 +1,4 @@
+import { AuthService } from './auth/auth.service';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AgChartsAngularModule } from 'ag-charts-angular';
@@ -52,9 +53,8 @@ import { TreeMapViewDualComponent } from './tree-map-view-dual/tree-map-view-dua
     NgbModule,
     ReactiveFormsModule,
     MatSidenavModule,
-    MatIconModule
+    MatIconModule,
   ],
-  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

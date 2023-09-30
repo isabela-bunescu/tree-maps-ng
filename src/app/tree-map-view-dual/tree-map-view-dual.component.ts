@@ -317,14 +317,14 @@ export class TreeMapViewDualComponent {
         this.rectangles_left[time_index_end],
         duration_this,
         'w1',
-        this.layout_settings_left.color_scheme
+        this.layout_settings_left
       );
       render_with_change(
         this.rectangles_right[time_index_start],
         this.rectangles_right[time_index_end],
         duration_this,
         'w2',
-        this.layout_settings_right.color_scheme
+        this.layout_settings_right
       );
     }
   }

@@ -146,7 +146,15 @@ export class TreeMapViewD3Component {
     this.changelog_display = [];
   }
 
+
+
+/**
+ * Resets the view of an application. It performs several actions to restore the initial state of certain variables and trigger a rendering process.
+ * 
+ * @returns {void}
+ */ 
   public reset_view() {
+    
     this.changelog_display = [];
     if (this.playing) clearTimeout(this.timer);
     this.playing = false;
@@ -155,6 +163,14 @@ export class TreeMapViewD3Component {
     this.render(this.index_time);
   }
 
+
+
+
+/**
+ * Updates the layout of the visualization to the new layout settings.
+ * 
+ * @returns {void} - An array containing the rectangles for the left visualization and the changelog now.
+ */ 
   public update_to_new_layout() {
     [this.rectangles_left, this.changelog_now] = data_to_rectangles(
       this.data,
@@ -305,7 +321,7 @@ export class TreeMapViewD3Component {
         this.rectangles_left[time_index_end],
         duration_this,
         'w1',
-        this.layout_settings_left.color_scheme
+        this.layout_settings_left
       );
     }
   }

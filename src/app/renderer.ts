@@ -12,7 +12,7 @@ import {
   raw_data_to_trees,
 } from './tree-map-node';
 import { BuildTreeMap } from './tree-map-node';
-import { ColorScheme, HighlightType } from 'src/layout-settings';
+import { ColorScheme, HighlightType, LayoutSettings } from 'src/layout-settings';
 
 export function interp_lin(
   t: number,
@@ -305,13 +305,17 @@ export function render_with_change(
   rectangles_end: RectNode[],
   duration: number,
   id: string,
-  color_scheme: ColorScheme = ColorScheme.HSL
+  settings: LayoutSettings
 ) {
+  let color_scheme = settings.color_scheme;
+  let text_highlight = settings.text_highlight;
   let creation_occurs = false; // flag that will be true if at least one node is created in this transition
   let deletion_occurs = false; // flag that will be true if at least one node gets deleted in this transition
+  let movement_occurs = false;
   let rectangles_combined: any[] = rectangles_start.map((el, i) => {
     if (rectangles_end[i].transition == Change.Create) creation_occurs = true;
     if (rectangles_end[i].transition == Change.Delete) deletion_occurs = true;
+    if (rectangles_end[i].transition == Change.Move) movement_occurs = true;
     return { start: el, end: rectangles_end[i] };
   });
 
@@ -664,6 +668,7 @@ export function render_with_change(
               .html('')
               .append('xhtml:div')
               .style('opacity', d.end.color_a.toString())
+              .style('font-weight', 'normal')
               .style('width', '100%')
               .style('height', '100%')
               .style('color', '#fff')
@@ -735,6 +740,7 @@ export function render_with_change(
             .html(display_text)
             .style('width', '100%')
             .style('height', '100%')
+            .style('font-weight', text_highlight && t>t_start && t< t_start+length && movement_occurs ? "bold" : "normal")
             .style('color', '#fff')
             .style('white-space', 'pre-wrap')
             .style('white-space', '-moz-pre-wrap')
@@ -799,6 +805,7 @@ export function render_with_change(
             .append('xhtml:div')
             .style('width', '100%')
             .style('height', '100%')
+            .style('opacity', text_highlight && t > t_start && t<t_start+length && movement_occurs ? '15%' : '100%')
             .style('color', '#fff')
             .style('white-space', 'pre-wrap')
             .style('white-space', '-moz-pre-wrap')

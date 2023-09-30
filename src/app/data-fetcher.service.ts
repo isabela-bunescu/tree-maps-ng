@@ -204,4 +204,12 @@ export class DataFetcherService {
   public put_data(name: string, data: any) {
     return this.http.put<any>(this.base_url + 'data/json/'+ name, {'data': data});
   }
+
+  public login(key: string) {
+    return this.http.post<any>(this.base_url + 'users/login', {'key': key});
+  }
+
+  public logout() {
+    return this.http.get<any>(this.base_url + 'users/logout');
+  }
 }

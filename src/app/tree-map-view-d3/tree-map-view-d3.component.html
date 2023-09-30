@@ -97,9 +97,12 @@
             </select>
           </div>
 
+          
+
           <div class="row" style="width: 480px">
-            <label for="typeNumber"><b>Reference tree left</b></label>
+            <label *ngIf="isLoaded" for="typeNumber"><b>Reference tree left</b></label>
             <input
+              *ngIf="isLoaded"
               [min]="time_min"
               [max]="time_max"
               [step]="timesteps[1] - timesteps[0]"
@@ -109,6 +112,11 @@
               [(ngModel)]="layout_settings_left.reference_tree_time"
               (ngModelChange)="update_to_new_layout()"
             />
+          </div>
+
+          <div class="row form-switch justify-content-left" style="width: 200px; height: 40px; padding-top: 10px;">
+            <label *ngIf="isLoaded" class="form-check-label" for="flexSwitchCheckChecked"><b>Text highlight</b></label>
+            <input *ngIf="isLoaded" class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" [(ngModel)]="layout_settings_left.text_highlight" (ngModelChange)="update_to_new_layout()">
           </div>
         </div>
 

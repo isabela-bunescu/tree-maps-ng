@@ -4,6 +4,7 @@ import { DataFetcherService } from '../data-fetcher.service';
 import { ModalDismissReasons, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { keyProperty } from 'ag-charts-community/dist/cjs/es5/module-support';
+//import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-user-list',
@@ -48,7 +49,8 @@ export class UserListComponent {
         this.loaded = true;
       },
       error: (error) => {
-        this.errorMessage = error;
+        console.log(error)
+        this.errorMessage = error.error;
         this.displayError = true;
       },
     });

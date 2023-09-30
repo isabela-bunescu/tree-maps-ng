@@ -28,6 +28,7 @@ export class LayoutSettings {
   public color_scheme: ColorScheme = ColorScheme.HSL;
   public highlight: HighlightType = 1;
   public reference_tree_time: number = 0;
+  public text_highlight: boolean = true;
 
   readonly color_scheme_names: string[] = ['HSL', 'LCH'];
 

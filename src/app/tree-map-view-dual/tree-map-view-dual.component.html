@@ -109,6 +109,11 @@
               (ngModelChange)="update_to_new_layout()"
             />
           </div>
+
+          <div class="row form-switch justify-content-left" style="width: 240px; height: 40px; padding-top: 10px;">
+            <label *ngIf="isLoaded" class="form-check-label" for="flexSwitchCheckChecked"><b>Text highlight left</b></label>
+            <input *ngIf="isLoaded" class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" [(ngModel)]="layout_settings_left.text_highlight" (ngModelChange)="update_to_new_layout()">
+          </div>
         </div>
 
         <div class="column" style="width: 250px">
@@ -193,6 +198,11 @@
               [(ngModel)]="layout_settings_right.reference_tree_time"
               (ngModelChange)="update_to_new_layout()"
             />
+          </div>
+
+          <div class="row form-switch justify-content-left" style="width: 240px; height: 40px; padding-top: 10px;">
+            <label *ngIf="isLoaded" class="form-check-label" for="flexSwitchCheckChecked2"><b>Text highlight right</b></label>
+            <input *ngIf="isLoaded" class="form-check-input" type="checkbox" id="flexSwitchCheckChecked2" [(ngModel)]="layout_settings_right.text_highlight" (ngModelChange)="update_to_new_layout()">
           </div>
         </div>
       </div>

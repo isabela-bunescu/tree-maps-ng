@@ -1,1 +1,16 @@
-<p>login-page works!</p>
+  <div style="padding-left: 0; padding-right: 0">
+    <c-alert [(visible)]="displayError" color="danger" dismissible="true">{{
+      errorMessage
+    }}</c-alert>
+    <c-alert [(visible)]="displayStatus" color="success" dismissible="true">{{
+      statusMessage
+    }}</c-alert>
+  </div>
+<form class="form-inline" [formGroup]="userForm" (ngSubmit)="onSubmit(userForm.value)">
+
+    <div class="form-group mx-sm-3 mb-2">
+      <label for="key" class="sr-only">Authentification key</label>
+      <input formControlName="key" type="password" class="form-control" id="key" placeholder="Authentification key">
+    </div>
+    <button type="submit" class="btn btn-primary mb-2">Login</button>
+  </form>
