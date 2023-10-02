@@ -3,7 +3,6 @@ import {Router, CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot} from '
 
 import { AuthService } from './auth.service';
 
-
 @Injectable({
     providedIn: 'root'
 })

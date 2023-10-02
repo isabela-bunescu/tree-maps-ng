@@ -212,4 +212,8 @@ export class DataFetcherService {
   public logout() {
     return this.http.get<any>(this.base_url + 'users/logout');
   }
+
+  public check_login() {
+    return this.http.get<any>(this.base_url + 'users/check_login');
+  }
 }

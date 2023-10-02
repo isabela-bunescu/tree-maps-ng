@@ -4,41 +4,44 @@
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+    <div class="collapse navbar-collapse justify-content-between" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto mb-2 mb-lg-0">
         <li class="nav-item">
           <a class="nav-link active" aria-current="page" routerLink="">Home</a>
         </li>
-        <li *ngIf="isAuthentificated()" class="nav-item">
+        <li *ngIf="isAuthenticated()" class="nav-item">
           <a class="nav-link" routerLink="tree-map-view-d3">Treemap-d3</a>
         </li>
 
-        <li *ngIf="isAuthentificated()"class="nav-item">
+        <li *ngIf="isAuthenticated()"class="nav-item">
           <a class="nav-link" routerLink="tree-map-view-dual">Comparison</a>
         </li>
 
-        <li *ngIf="isAuthentificated()" class="nav-item">
+        <li *ngIf="isAuthenticated()" class="nav-item">
           <a class="nav-link" routerLink="datasets-viewer">Datasets</a>
         </li>
 
-        <li *ngIf="isAuthentificated()" class="nav-item">
+        <li *ngIf="isAuthenticated()" class="nav-item">
           <a class="nav-link" routerLink="tree-map-view">Treemap-Agcharts</a>
         </li>
 
-        <li *ngIf="isAuthentificated()" class="nav-item">
+        <li *ngIf="isAuthenticated()" class="nav-item">
           <a class="nav-link" routerLink="tree-map-view-amcharts">Treemap-amcharts</a>
         </li>
 
-        <li *ngIf="isAuthentificated() && isRoot()"  class="nav-item">
+        <li *ngIf="isAuthenticated() && isRoot()"  class="nav-item">
           <a class="nav-link" routerLink="user-list">Users</a>
         </li>
 
-        <li *ngIf="!isAuthentificated()"class="nav-item">
-          <a class="nav-link" routerLink="login">Login</a>
+        <li *ngIf="!isAuthenticated()"class="nav-item">
+          <a class="nav-link" routerLink="login"> Login</a>
         </li>
+        </ul>
 
-        <li *ngIf="isAuthentificated()" class="nav-item">
-          <a class="nav-link" (click)="logout()">Logout</a>
+        <ul class="navbar-nav ">
+
+        <li *ngIf="isAuthenticated()" class="nav-item">
+          <a class="nav-link" (click)="logout()"> <b>Logout</b></a>
         </li>
       </ul>
     </div>

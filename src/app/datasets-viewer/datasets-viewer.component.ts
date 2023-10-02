@@ -4,6 +4,7 @@ import { DataFetcherService } from '../data-fetcher.service';
 import { Router } from '@angular/router';
 import { ModalDismissReasons, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-datasets-viewer',
@@ -33,13 +34,18 @@ export class DatasetsViewerComponent {
     private dfs: DataFetcherService,
     private router: Router,
     private modalService: NgbModal,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private afs: AuthService
   ) {}
 
   @ViewChild('content') modalRef: ElementRef | undefined;
 
   ngOnInit() {
     this.reload();
+  }
+
+  public canEdit(){
+    return this.afs.canEdit();
   }
 
   public reload() {

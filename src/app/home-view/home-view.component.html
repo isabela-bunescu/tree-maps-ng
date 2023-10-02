@@ -1,6 +1,8 @@
 
 <div style="border:1px solid black; margin: 15vh;">
   <div style="padding: 15vh;">
+    <h1 *ngIf="afs.isAuth()" style="font-family: cursive; text-align: justify;">Welcome <b>{{afs.getName()}}</b>!</h1>
+    <p></p>
     <h1 style="font-family: cursive; text-align: justify;">The aim of this work is to visually compare different treemap layouting algorithms with respect to how easy it is to detect structural changes that occur over time. This is done by adding color-coding to the individual rectangles in the treemap.
     </h1>
     </div>

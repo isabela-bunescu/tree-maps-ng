@@ -1,3 +1,6 @@
-FROM nginx:1.17.1-alpine
+FROM nginx:latest
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY /dist/treepmaps-ng /usr/share/nginx/html
+COPY dist/ .
+RUN mv /tree-maps-ng/* /usr/share/nginx/html
+
+EXPOSE 80

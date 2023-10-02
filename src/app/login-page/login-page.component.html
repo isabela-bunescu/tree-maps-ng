@@ -1,16 +1,26 @@
-  <div style="padding-left: 0; padding-right: 0">
-    <c-alert [(visible)]="displayError" color="danger" dismissible="true">{{
-      errorMessage
+<div style="padding-left: 0; padding-right: 0">
+  <c-alert [(visible)]="displayError" color="danger" dismissible="true">{{
+    errorMessage
     }}</c-alert>
-    <c-alert [(visible)]="displayStatus" color="success" dismissible="true">{{
-      statusMessage
+  <c-alert [(visible)]="displayStatus" color="success" dismissible="true">{{
+    statusMessage
     }}</c-alert>
-  </div>
-<form class="form-inline" [formGroup]="userForm" (ngSubmit)="onSubmit(userForm.value)">
+</div>
+<div class="flex justify-center" style="text-align: center;">
+  <div style="height: 30vh"></div>
+  <div class="row">
+  <form class="form-inline" [formGroup]="userForm" (ngSubmit)="onSubmit(userForm.value)">
+    <div class="flex form-group mx-sm-3 mb-2" style="text-align: center;">
+      <label for="key" class="sr-only" style="padding-right: 20px">Authentification key: </label>
+      <input formControlName="key" style="width: 200px;" type="password" class="form-group" id="key"
+        placeholder="Authentification key">
+        <div class="row flex justify-center" style="padding-top: 10px;text-align:center;">
+          <div class="col">
+        <button type="submit" style="width:100px" class="btn btn-primary">Login</button>
+        </div>
 
-    <div class="form-group mx-sm-3 mb-2">
-      <label for="key" class="sr-only">Authentification key</label>
-      <input formControlName="key" type="password" class="form-control" id="key" placeholder="Authentification key">
+        </div>
     </div>
-    <button type="submit" class="btn btn-primary mb-2">Login</button>
   </form>
+  </div>
+</div>

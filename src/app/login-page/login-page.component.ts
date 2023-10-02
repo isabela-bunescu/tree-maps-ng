@@ -33,7 +33,7 @@ export class LoginPageComponent {
       next: (data) => {
         if(data.success){
           console.log('Login succeded');
-          this.afs.login(data.root, data.edit);
+          this.afs.login(data.root, data.edit, data.name);
         }
         else{
           console.log('Login failed');
