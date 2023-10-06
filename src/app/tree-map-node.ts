@@ -83,34 +83,88 @@ export function raw_data_to_trees(data: any): [TreeMapNode[], number[]] {
  * @param tree_root
  * @returns
  */
+/**
+ * Converts a tree structure into a TreeMapNode structure.
+ * @param tree_root - The root node of the tree structure to be converted.
+ * @returns The converted TreeMapNode structure.
+ */
 export function TreeConversion(tree_root: any): TreeMapNode {
-
+  // Check if the tree node has children
   if (tree_root.hasOwnProperty("children")) {
-    let ch = tree_root.children.map(c => { return TreeConversion(c); }); //decorate_tree_partition(children[i], sofar, sofar + values[i])
-    ch = ch.sort((a, b) => { return a.name.localeCompare(b.value); })
+    // Convert each child recursively and store them in 'ch' array
+    let ch = tree_root.children.map(c => { return TreeConversion(c); });
+
+    // Sort the 'ch' array based on the 'name' property of each TreeMapNode
+    ch = ch.sort((a, b) => { return a.name.localeCompare(b.value); });
+
+    // Check if the tree node has 'time' property
     if (tree_root.hasOwnProperty("time"))
-      return { name: tree_root.time, value: tree_root.total_value, hash: tree_root.hash, lim_min: tree_root.lim_min, lim_max: tree_root.lim_max, children: ch, leaf: false } as TreeMapNode;
+      return {
+        name: tree_root.time,
+        value: tree_root.total_value,
+        hash: tree_root.hash,
+        lim_min: tree_root.lim_min,
+        lim_max: tree_root.lim_max,
+        children: ch,
+        leaf: false
+      } as TreeMapNode;
     else
-      return { name: tree_root.name, value: tree_root.total_value, hash: tree_root.hash, lim_min: tree_root.lim_min, lim_max: tree_root.lim_max, children: ch, leaf: false } as TreeMapNode;
+      return {
+        name: tree_root.name,
+        value: tree_root.total_value,
+        hash: tree_root.hash,
+        lim_min: tree_root.lim_min,
+        lim_max: tree_root.lim_max,
+        children: ch,
+        leaf: false
+      } as TreeMapNode;
   }
-  else
-    return { name: tree_root.name, value: tree_root.value, hash: tree_root.hash, lim_min: tree_root.lim_min, lim_max: tree_root.lim_max, children: [], leaf: true } as TreeMapNode;
-
-
+  else {
+    // If the tree node doesn't have children, create a leaf TreeMapNode
+    return {
+      name: tree_root.name,
+      value: tree_root.value,
+      hash: tree_root.hash,
+      lim_min: tree_root.lim_min,
+      lim_max: tree_root.lim_max,
+      children: [],
+      leaf: true
+    } as TreeMapNode;
+  }
 }
 
-
+/**
+ * Generates a slice-and-dice tree map visualization.
+ * @param tree - The root node of the input tree structure.
+ * @param parent_division - The division coordinates of the parent node.
+ * @returns An array of RectNode objects representing the tree map visualization.
+ */
 export function SliceAndDiceTreeMap(tree: TreeMapNode, parent_division: any): RectNode[] {
-  if (tree.leaf)
-    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 40, color_a: 1.0, transition: Change.None } as RectNode]
-  else {
+  if (tree.leaf) {
+    // Base case: If the current node is a leaf node, return a single RectNode representing the leaf.
+    return [{
+      name: tree.name,
+      value: tree.value,
+      x0: parent_division.x0,
+      x1: parent_division.x1,
+      y0: parent_division.y0,
+      y1: parent_division.y1,
+      color: "#fff000",
+      color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360,
+      color_s: 50,
+      color_l: 40,
+      color_a: 1.0,
+      transition: Change.None
+    } as RectNode];
+  } else {
+    // Recursive case: Divide and process child nodes.
+
     let start, end, new_slice;
     if (parent_division.slice == 0) {
       start = parent_division.x0;
       end = parent_division.x1;
       new_slice = 1;
-    }
-    else {
+    } else {
       start = parent_division.y0;
       end = parent_division.y1;
       new_slice = 0;
@@ -124,30 +178,52 @@ export function SliceAndDiceTreeMap(tree: TreeMapNode, parent_division: any): Re
       let c = tree.children[i];
 
       let delta = (c.value / val) * (end - start);
+
       if (parent_division.slice == 0)
-        arr = arr.concat(SliceAndDiceTreeMap(c, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice }))
+        arr = arr.concat(SliceAndDiceTreeMap(c, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice }));
 
       if (parent_division.slice == 1)
-        arr = arr.concat(SliceAndDiceTreeMap(c, { x0: parent_division.x0, x1: parent_division.x1, y0: start + so_far, y1: start + so_far + delta, slice: new_slice }))
+        arr = arr.concat(SliceAndDiceTreeMap(c, { x0: parent_division.x0, x1: parent_division.x1, y0: start + so_far, y1: start + so_far + delta, slice: new_slice }));
+
       so_far += delta;
     }
     return arr;
   }
-
 }
 
-
+/**
+ * Generates a tree map visualization based on the input tree.
+ * 
+ * @param {TreeMapNode} tree - The input tree object.
+ * @param {string} type - The type of tree map.
+ * @param {any} parent_division - The division information of the parent node.
+ * @returns {RectNode[]} - An array of rectangle nodes representing the tree map.
+ */
 export function BuildTreeMap(tree: TreeMapNode, type: string, parent_division: any): RectNode[] {
-  if (tree.leaf)
-    return [{ name: tree.name, value: tree.value, x0: parent_division.x0, x1: parent_division.x1, y0: parent_division.y0, y1: parent_division.y1, color: "#fff000", color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360, color_s: 50, color_l: 50, color_a: 1.0, transition: Change.None } as RectNode]
-  else {
+  if (tree.leaf) {
+    // Base case: If the current node is a leaf node, return a rectangle node representing it
+    return [{
+      name: tree.name,
+      value: tree.value,
+      x0: parent_division.x0,
+      x1: parent_division.x1,
+      y0: parent_division.y0,
+      y1: parent_division.y1,
+      color: "#fff000",
+      color_h: (Math.round(360 * (tree.lim_max + tree.lim_min) / 2) + 60) % 360,
+      color_s: 50,
+      color_l: 50,
+      color_a: 1.0,
+      transition: Change.None
+    } as RectNode];
+  } else {
+    // Recursive case: If the current node is not a leaf node
     let start, end, new_slice;
     if (parent_division.slice == 0) {
       start = parent_division.x0;
       end = parent_division.x1;
       new_slice = 1;
-    }
-    else {
+    } else {
       start = parent_division.y0;
       end = parent_division.y1;
       new_slice = 0;
@@ -157,39 +233,97 @@ export function BuildTreeMap(tree: TreeMapNode, type: string, parent_division: a
     let val = tree.children.reduce((pv, ch) => { return pv + ch.value; }, 0);
     let so_far = 0;
     let idx = tree.children.map((el, id) => { return { v: el.value, id: id } }).sort((a, b) => { return a.v - b.v; });
+
     for (let i = 0; i < tree.children.length; i++) {
       let c = tree.children[idx[i].id];
-
       let delta = (c.value / val) * (end - start);
+
       if (parent_division.slice == 0)
-        arr = arr.concat(BuildTreeMap(c, type, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice }))
-      //arr = arr.concat(BuildTreeMap(c, type, { x0: start + so_far, x1: start + so_far + delta, y0: parent_division.y0, y1: parent_division.y1, slice: new_slice }))
+        arr = arr.concat(BuildTreeMap(c, type, {
+          x0: start + so_far,
+          x1: start + so_far + delta,
+          y0: parent_division.y0,
+          y1: parent_division.y1,
+          slice: new_slice
+        }));
 
       if (parent_division.slice == 1)
-        arr = arr.concat(BuildTreeMap(c, type, { x0: parent_division.x0, x1: parent_division.x1, y0: start + so_far, y1: start + so_far + delta, slice: new_slice }))
+        arr = arr.concat(BuildTreeMap(c, type, {
+          x0: parent_division.x0,
+          x1: parent_division.x1,
+          y0: start + so_far,
+          y1: start + so_far + delta,
+          slice: new_slice
+        }));
+
       so_far += delta;
     }
     return arr;
   }
 }
-
+/**
+ * Returns an array of layout names along with their display names and descriptions.
+ * @returns An array of objects containing layout information.
+ */
 export function get_layout_names(): any[] {
-  return [{ Name: "s&d_h", DisplayName: "Slice & dice horizontal", Description: "Slice and dice algorithm starting with horizontal division." },
-  { Name: "s&d_v", DisplayName: "Slice & dice vertical", Description: "Slice and dice algorithm starting with vertical division." },
-  { Name: "s&d_auto", DisplayName: "Slice & dice automatic", Description: "Slice and dice algorithm where slicing and dicing is done based on viewport ratio." },
-  { Name: "sq_max", DisplayName: "Squarify (maximum)", Description: "Greedy sqarify algorithm (mainimum of ratio)." },
-  { Name: "sq_mean", DisplayName: "Squarify (mean)", Description: "Greedy sqarify algorithm (average ratio)." },
-  { Name: "spa", DisplayName: "Spiral ascending", Description: "Spiral arrangement where nodes are placed in ascending order." },
-  { Name: "spd", DisplayName: "Spiral descending", Description: "Spiral arrangement where nodes are placed in descending order." },
-  { Name: "spa_cont", DisplayName: "Spiral ascending continous", Description: "Spiral arrangement where nodes are placed in ascending order. Time continous version." },
-  { Name: "spd_cont", DisplayName: "Spiral descending continous", Description: "Spiral arrangement where nodes are placed in descending order. Time continous version." }];
+  return [
+    { 
+      Name: "s&d_h", 
+      DisplayName: "Slice & dice horizontal", 
+      Description: "Slice and dice algorithm starting with horizontal division." 
+    },
+    { 
+      Name: "s&d_v", 
+      DisplayName: "Slice & dice vertical", 
+      Description: "Slice and dice algorithm starting with vertical division." 
+    },
+    { 
+      Name: "s&d_auto", 
+      DisplayName: "Slice & dice automatic", 
+      Description: "Slice and dice algorithm where slicing and dicing is done based on viewport ratio." 
+    },
+    { 
+      Name: "sq_max", 
+      DisplayName: "Squarify (maximum)", 
+      Description: "Greedy squarify algorithm (minimum of ratio)." 
+    },
+    { 
+      Name: "sq_mean", 
+      DisplayName: "Squarify (mean)", 
+      Description: "Greedy squarify algorithm (average ratio)." 
+    },
+    { 
+      Name: "spa", 
+      DisplayName: "Spiral ascending", 
+      Description: "Spiral arrangement where nodes are placed in ascending order." 
+    },
+    { 
+      Name: "spd", 
+      DisplayName: "Spiral descending", 
+      Description: "Spiral arrangement where nodes are placed in descending order." 
+    },
+    { 
+      Name: "spa_cont", 
+      DisplayName: "Spiral ascending continuous", 
+      Description: "Spiral arrangement where nodes are placed in ascending order. Time continuous version." 
+    },
+    { 
+      Name: "spd_cont", 
+      DisplayName: "Spiral descending continuous", 
+      Description: "Spiral arrangement where nodes are placed in descending order. Time continuous version." 
+    }
+  ];
 }
 
 /**
+ * Converts tree data into rectangles using a specified layout algorithm.
  *
- * @param trees array of trees for different timesteps
- * @param layout layout type
- * @returns
+ * @param trees - Array of trees for different timesteps.
+ * @param layout - Layout type to be used for generating rectangles.
+ * @param width - Width of the rectangle container.
+ * @param height - Height of the rectangle container.
+ * @param reference_tree_index - Index of the reference tree in the trees array (default: 0).
+ * @returns An array containing the generated rectangles and the changelogs for each timestep.
  */
 export function data_to_rectangles(trees: TreeMapNode[], layout: LayoutType, width: number, height: number, reference_tree_index: number = 0): [RectNode[][], Changelog[][]] {
 
@@ -291,7 +425,7 @@ export function data_to_rectangles(trees: TreeMapNode[], layout: LayoutType, wid
 }
 
 /**
- * finds structural differences using hash-based algorithm
+ * Finds structural differences using hash-based algorithm
  * @param t1 treemap1
  * @param t2 treemap2
  * @param path explored list of nodes
