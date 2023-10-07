@@ -15,10 +15,6 @@ RUN npm run build --prod
 FROM nginx:1.16.0-alpine
 
 COPY nginx.conf /etc/nginx/nginx.conf
-#COPY nginx.conf /etc/nginx/nginx.conf
-#COPY dist/ .
-#RUN mv /tree-maps-ng/* /usr/share/nginx/html
-
 COPY --from=build-step /app/dist/tree-maps-ng /usr/share/nginx/html
 
 ENV BEHOST=backend
